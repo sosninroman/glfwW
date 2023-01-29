@@ -1,4 +1,3 @@
-//#include <glad/glad.h>
 #include "glfwlibrary.h"
 #include <iostream>
 #include <filesystem>
@@ -52,12 +51,6 @@ int main()
     }
     window.activate();
     window.setFramebufferSizeCallback(framebufferSizeCallback);
-
-//    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-//    {
-//        std::cout << "Failed to initialize GLAD" << std::endl;
-//        return -1;
-//    }
 
     while (!window.shouldClose())
     {

@@ -23,7 +23,7 @@ enum class ErrorCode
     VERSION_UNAVAILABLE = 0x00010007,
     PLATFORM_ERROR = 0x00010008,
     FORMAT_UNAVAILABLE = 0x00010009,
-    NO_WINDOW_CONTEXT = 0x0001000A
+    NO_WINDOW_CONTEXT = 0x0001000A,
 };
 
 struct Error
@@ -34,6 +34,9 @@ struct Error
 
 void errorCallback(int errorCode, const char *description);
 
+/*!
+ * \brief The GLFW library wrapper class
+ */
 class GLFWlibrary
 {
 public:
@@ -49,16 +52,16 @@ public:
         {
 
         }
-        bool joystickHatButtons;
-        bool cocoaChdirResources;
-        bool cocoaMenubar;
+        bool joystickHatButtons = true;
+        bool cocoaChdirResources = true;
+        bool cocoaMenubar = true;
     };
 
     struct Version
     {
-        int major;
-        int minor;
-        int revision;
+        int major = 0;
+        int minor = 0;
+        int revision = 0;
         std::string versionString;
     };
 
@@ -70,19 +73,14 @@ public:
         return inst;
     }
 
-private:
-    GLFWlibrary() = default;
-    ~GLFWlibrary()
-    {
-        deinit();
-    }
-
-public:
+    /*!
+     * \brief Initialize GLFW library. Has to be called before library using.
+     */
     Error init(InitHints hints = InitHints())
     {
-        glfwInitHint(GLFW_JOYSTICK_HAT_BUTTONS, hints.joystickHatButtons ? GLFW_TRUE : GLFW_FALSE);
-        glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, hints.cocoaChdirResources ? GLFW_TRUE : GLFW_FALSE);
-        glfwInitHint(GLFW_COCOA_MENUBAR, hints.cocoaMenubar ? GLFW_TRUE : GLFW_FALSE);
+        glfwInitHint(GLFW_JOYSTICK_HAT_BUTTONS, toGLFWBool(hints.joystickHatButtons));
+        glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, toGLFWBool(hints.cocoaChdirResources));
+        glfwInitHint(GLFW_COCOA_MENUBAR, toGLFWBool(hints.cocoaMenubar));
 
         glfwSetErrorCallback(errorCallback);
 
@@ -96,6 +94,9 @@ public:
         return Error();
     }
 
+    /*!
+     * \brief Returns if GLFW has been initialized already.
+     */
     bool initialized() const {return m_initialized;}
 
     void deinit()
@@ -168,6 +169,13 @@ public:
 private:
     friend void errorCallback(int errorCode, const char *description);
 
+    GLFWlibrary() = default;
+
+    ~GLFWlibrary()
+    {
+        deinit();
+    }
+
     void onError(int errorCode, const char *description) const
     {
         if(m_errorHandler)
@@ -179,6 +187,13 @@ private:
         }
     }
 
+    template<typename T = decltype (GLFW_TRUE)>
+    T toGLFWBool(bool val)
+    {
+        return val ? GLFW_TRUE : GLFW_FALSE;
+    }
+
+private:
     bool m_initialized = false;
     ErrorHandler* m_errorHandler = nullptr;
 
