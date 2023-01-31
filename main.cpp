@@ -38,11 +38,16 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    glfwW::Window window = lib.createWindow({SCR_WIDTH, SCR_HEIGHT}, "LearnOpenGL");
+    glfwW::Window window = lib.createWindow({SCR_WIDTH, SCR_HEIGHT}, "glfwW demo");
+    //glfwW::Window window = lib.createWindow(lib.getPrimaryMonitor(), "glfwW demo");
     if (!window.valid()) {
         return -1;
     }
 
+    //const auto mode = lib.getPrimaryMonitor().getVideoMode();
+    //window.setMonitor(lib.getPrimaryMonitor(), {mode.width, mode.height}, mode.refreshRate);
+
+    //window.toggleFullscreen();
 
     if (!window.valid())
     {

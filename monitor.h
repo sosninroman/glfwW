@@ -1,26 +1,12 @@
-#ifndef MONITOR_H
-#define MONITOR_H
+#ifndef GLFWW_MONITOR_H
+#define GLFWW_MONITOR_H
 
 #include <vector>
 #include <string>
-#include "GLFW/glfw3.h"
+#include "defs.h"
 
 namespace glfwW
 {
-
-template<typename T>
-struct Vec2
-{
-    T x = T();
-    T y = T();
-};
-
-template<typename T>
-struct Rect
-{
-    Vec2<T> position;
-    Vec2<T> size;
-};
 
 /*!
  * \brief The video mode of a monitor
@@ -70,11 +56,9 @@ class Monitor
 {
     friend class GLFWlibrary;
     friend class Window;
-private:
-    Monitor(GLFWmonitor* descriptor):m_monitor(descriptor){}
 
 public:
-    Monitor() = default;
+    Monitor(GLFWmonitor* descriptor = nullptr): m_monitor(descriptor){}
 
     VideoMode getVideoMode() const
     {
@@ -118,7 +102,7 @@ public:
         return result;
     }
 
-    Vec2<int> position() const
+    Vec2<int> getPosition() const
     {
         Vec2<int> result;
         if(m_monitor)
@@ -144,6 +128,9 @@ public:
     }
 
     GLFWmonitor* getHandler() const {return m_monitor;}
+
+    bool isValid() const {return m_monitor;}
+
 private:
     GLFWmonitor* m_monitor = nullptr;
 };

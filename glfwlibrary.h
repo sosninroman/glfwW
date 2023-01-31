@@ -1,12 +1,11 @@
-#ifndef GLFWLIBRARY_H
-#define GLFWLIBRARY_H
+#ifndef GLFWW_LIBRARY_H
+#define GLFWW_LIBRARY_H
 
-//#include <GLFW/glfw3.h>
 #include <cstring>
 #include <functional>
 #include <string>
 #include "monitor.h"
-#include "window_wr.h"
+#include "window.h"
 
 namespace glfwW
 {
@@ -73,26 +72,11 @@ public:
         return inst;
     }
 
+    //INITIALIZATION
     /*!
      * \brief Initialize GLFW library. Has to be called before library using.
      */
-    Error init(InitHints hints = InitHints())
-    {
-        glfwInitHint(GLFW_JOYSTICK_HAT_BUTTONS, toGLFWBool(hints.joystickHatButtons));
-        glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, toGLFWBool(hints.cocoaChdirResources));
-        glfwInitHint(GLFW_COCOA_MENUBAR, toGLFWBool(hints.cocoaMenubar));
-
-        glfwSetErrorCallback(errorCallback);
-
-        if(glfwInit() != GLFW_TRUE)
-        {
-            return readLastError();
-        }
-
-        m_initialized = true;
-
-        return Error();
-    }
+    Error init(InitHints hints = InitHints());
 
     /*!
      * \brief Returns if GLFW has been initialized already.
@@ -105,6 +89,7 @@ public:
         glfwTerminate();
     }
 
+    //ERRORS
     void setErrorCallback(ErrorHandler* handler)
     {
         m_errorHandler = handler;
@@ -119,6 +104,7 @@ public:
         return result;
     }
 
+    //INFORMATION
     Version version() const
     {
         Version result;
@@ -128,39 +114,46 @@ public:
         return result;
     }
 
-    Monitor getPrimaryMonitor() const
-    {
-        return Monitor(glfwGetPrimaryMonitor());
-    }
+    //MONITORS
+    /*!
+     * \brief Returns information about primary monitor
+     */
+    Monitor getPrimaryMonitor() const;
 
-    std::vector<Monitor> getMonitors() const
-    {
-        int count = 0;
-        std::vector<Monitor> result;
-        auto* glfwMonitors = glfwGetMonitors(&count);
-        for(int i = 0; i < count; ++i)
-        {
-            result.push_back(Monitor(glfwMonitors[i]));
-        }
-        return result;
-    }
+    /*!
+     * \brief Returns information about all currently connected monitors
+     * \return
+     */
+    std::vector<Monitor> getMonitors() const;
 
-//    Window createWindow(Vec2<int> size, const std::string& title)
-//    {
-//        return Window(glfwCreateWindow(size.x, size.y, "title.data()", NULL, NULL));
-//    }
+    //WINDOWS
+    /*!
+     * \brief Creates a fullscreen window on a particular monitor
+     */
+    Window createWindow(const Monitor& monitor, const std::string& title);
 
-    Window createWindow(Vec2<int> size, const std::string& title, const Monitor& monitor = Monitor())
-    {
-        return Window(glfwCreateWindow(size.x, size.y, title.data(), monitor.m_monitor, nullptr), Window::WindowOwnership::Owner);
-    }
+    /*!
+     * \brief Creates a fullscreen window on a particular monitor
+     */
+    Window createWindow(const Monitor& monitor, Vec2<int> resolution, const std::string& title);
 
-    Window createWindow(const WindowCreationHints& hints,  Vec2<int> size, const std::string& title, const Monitor& monitor = Monitor())
+    /*!
+     * \brief Creates a new window in windowed mode
+     */
+    Window createWindow(Vec2<int> size, const std::string& title);
+
+    /*!
+     * \brief Creates a new window with particular creation hints
+     */
+    Window createWindow(const WindowCreationHints& hints,  Vec2<int> size, const std::string& title)
     {
+        //save current hints
         hints.apply();
-        return createWindow(size, title, monitor);
+        return createWindow(size, title);
+        //restore old hints
     }
 
+    //EVENTS
     void pollEvents() const
     {
         glfwPollEvents();
@@ -176,28 +169,11 @@ private:
         deinit();
     }
 
-    void onError(int errorCode, const char *description) const
-    {
-        if(m_errorHandler)
-        {
-            Error error;
-            error.code = static_cast<ErrorCode>(errorCode);
-            error.description.assign(description);
-            std::invoke(*m_errorHandler, error);
-        }
-    }
-
-    template<typename T = decltype (GLFW_TRUE)>
-    T toGLFWBool(bool val)
-    {
-        return val ? GLFW_TRUE : GLFW_FALSE;
-    }
+    void onError(int errorCode, const char *description) const;
 
 private:
     bool m_initialized = false;
     ErrorHandler* m_errorHandler = nullptr;
-
-
 };
 
 }

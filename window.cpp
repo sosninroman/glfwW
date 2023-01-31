@@ -1,7 +1,14 @@
-#include "window_wr.h"
+#include "window.h"
+#include "glfwlibrary.h"
+#include "utils.h"
 
 namespace glfwW
 {
+
+void WindowCreationHints::resetToDefault()
+{
+    glfwDefaultWindowHints();
+}
 
 int glfwWindowHintValue(WindowHint hint)
 {
@@ -102,6 +109,17 @@ void windowPositionCallback(GLFWwindow* window, int x, int y)
 void windowRefreshCallback(GLFWwindow* window)
 {
     Window(window, Window::WindowOwnership::None).onRefresh();
+}
+
+void Window::toggleFullscreen()
+{
+    if(!m_window)
+    {
+        return;
+    }
+    const auto monitor = getMonitor(*this);
+    const auto mode = monitor.getVideoMode();
+    setMonitor(monitor, {mode.width, mode.height}, mode.refreshRate);
 }
 
 }

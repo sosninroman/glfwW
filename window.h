@@ -1,7 +1,6 @@
-#ifndef WINDOW_WR_H
-#define WINDOW_WR_H
+#ifndef GLFWW_WINDOW_H
+#define GLFWW_WINDOW_H
 
-#include <GLFW/glfw3.h>
 #include <cassert>
 #include <unordered_map>
 #include <algorithm>
@@ -111,6 +110,8 @@ struct FrameSize
 class WindowCreationHints
 {
 public:
+
+    static void resetToDefault();
 
     template<WindowHint hint, typename T>
     WindowCreationHints& addHint(T value)
@@ -285,26 +286,22 @@ public:
         }
     }
 
+    void toggleFullscreen();
+
+    /*!
+     * \brief Sets monitor for the windowed  mode
+     */
     void setMonitor(const Monitor& monitor, Vec2<int> size, int refreshRate) const
     {
         glfwSetWindowMonitor(m_window, monitor.getHandler(), 0, 0, size.x, size.y, refreshRate);
     }
 
+    /*!
+     * \brief Sets monitor for the windowed mode
+     */
     void setMonitor(Vec2<int> position, Vec2<int> size) const
     {
         glfwSetWindowMonitor(m_window, nullptr, position.x, position.y, size.x, size.y, 0);
-    }
-
-    GLFWwindow* getHandler() const {return m_window;}
-
-    Vec2<int> getSize() const
-    {
-        Vec2<int> result;
-        if(m_window)
-        {
-            glfwGetWindowSize(m_window, &result.x, &result.y);
-        }
-        return result;
     }
 
     void setSize(Vec2<int> size) const
@@ -383,6 +380,23 @@ public:
         {
             glfwShowWindow(m_window);
         }
+    }
+
+    /*!
+     * \brief Returns the GLFW window handler
+     */
+    GLFWwindow* getHandler() const {return m_window;}
+
+    bool ownHandler() const {return m_ownership == WindowOwnership::Owner;}
+
+    Vec2<int> getSize() const
+    {
+        Vec2<int> result;
+        if(m_window)
+        {
+            glfwGetWindowSize(m_window, &result.x, &result.y);
+        }
+        return result;
     }
 
 private:
