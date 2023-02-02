@@ -60,6 +60,32 @@ Window GLFWlibrary::createWindow(Vec2<int> size, const std::string& title)
     return Window(glfwCreateWindow(size.x, size.y, title.data(), nullptr, nullptr), Window::WindowOwnership::Owner);
 }
 
+Window GLFWlibrary::createWindow(const WindowCreationHints& hints,  Vec2<int> size, const std::string& title)
+{
+    hints.apply();
+    Window window = createWindow(size, title);
+    apply(m_currentHints);
+    return window;
+}
+
+WindowCreationHints GLFWlibrary::getWindowCreationHints() const
+{
+    return m_currentHints;
+}
+
+void GLFWlibrary::apply(WindowCreationHints hints)
+{
+    WindowCreationHints::resetToDefault();
+    hints.apply();
+    m_currentHints = hints;
+}
+
+void GLFWlibrary::resetWindowCreationHintsToDefault()
+{
+    m_currentHints = WindowCreationHints();
+    WindowCreationHints::resetToDefault();
+}
+
 void GLFWlibrary::onError(int errorCode, const char *description) const
 {
     if(m_errorHandler)

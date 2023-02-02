@@ -145,13 +145,22 @@ public:
     /*!
      * \brief Creates a new window with particular creation hints
      */
-    Window createWindow(const WindowCreationHints& hints,  Vec2<int> size, const std::string& title)
-    {
-        //save current hints
-        hints.apply();
-        return createWindow(size, title);
-        //restore old hints
-    }
+    Window createWindow(const WindowCreationHints& hints,  Vec2<int> size, const std::string& title);
+
+    /*!
+     * \brief Returns a set of window creation hints which were changed by this wrapper.
+     */
+    WindowCreationHints getWindowCreationHints() const;
+
+    /*!
+     * \brief Changes given window creation hints.
+     */
+    void apply(WindowCreationHints hints);
+
+    /*!
+     * \brief Resets window creation hints to default values.
+     */
+    void resetWindowCreationHintsToDefault();
 
     //EVENTS
     void pollEvents() const
@@ -174,6 +183,8 @@ private:
 private:
     bool m_initialized = false;
     ErrorHandler* m_errorHandler = nullptr;
+    WindowCreationHints m_currentHints;
+    //4. WindowCreationHints::apply -> private
 };
 
 }

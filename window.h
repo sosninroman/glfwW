@@ -111,8 +111,6 @@ class WindowCreationHints
 {
 public:
 
-    static void resetToDefault();
-
     template<WindowHint hint, typename T>
     WindowCreationHints& addHint(T value)
     {
@@ -128,25 +126,14 @@ public:
         return *this;
     }
 
-    void apply() const
-    {
-        std::for_each(m_boolHints.cbegin(), m_boolHints.cend(), [this](const std::pair<WindowHint, bool>& hint){
-            applyHint(hint.first, hint.second);
-        });
-        std::for_each(m_intHints.cbegin(), m_intHints.cend(), [this](const std::pair<WindowHint, int>& hint){
-            applyHint(hint.first, hint.second);
-        });
-    }
 private:
-    void applyHint(WindowHint hint, bool value) const
-    {
-        glfwWindowHint(glfwWindowHintValue(hint), value ? GLFW_TRUE :GLFW_FALSE);
-    }
+    friend class GLFWlibrary;
 
-    void applyHint(WindowHint hint, int value) const
-    {
-        glfwWindowHint(glfwWindowHintValue(hint), value);
-    }
+    static void resetToDefault();
+
+    void apply() const;
+    void applyHint(WindowHint hint, bool value) const;
+    void applyHint(WindowHint hint, int value) const;
 
     std::unordered_map<WindowHint, bool> m_boolHints;
     std::unordered_map<WindowHint, int> m_intHints;
@@ -187,27 +174,10 @@ private:
           m_window(window), m_ownership(ownership)
     {}
 public:
-    Window(GLFWwindow* window):
-          m_window(window), m_ownership(WindowOwnership::None)
-    {
-        assert(window);
-    }
-
+    Window(GLFWwindow* window);
     Window(const Window&) = delete;
-
-    ~Window()
-    {
-        if(m_window && m_ownership == WindowOwnership::Owner)
-        {
-            closeHandlers.erase(m_window);
-            sizeHandlers.erase(m_window);
-            framebufferSizeHandlers.erase(m_window);
-            positionHandlers.erase(m_window);
-            refreshHandlers.erase(m_window);
-
-            glfwDestroyWindow(m_window);
-        }
-    }
+    Window(Window&& rhs);
+    ~Window();
 
     bool valid() const {return m_window;}
 
@@ -286,6 +256,9 @@ public:
         }
     }
 
+    /*!
+     * \brief Turns the window in a fullscreen mode.
+     */
     void toggleFullscreen();
 
     /*!
@@ -304,6 +277,11 @@ public:
         glfwSetWindowMonitor(m_window, nullptr, position.x, position.y, size.x, size.y, 0);
     }
 
+    /*!
+     * \brief Sets window's size.
+     * If the window is fullscreen it changes it's resolution.
+     * If the window is windowed it changes it's size.
+     */
     void setSize(Vec2<int> size) const
     {
         if(m_window)

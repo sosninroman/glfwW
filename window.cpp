@@ -10,6 +10,26 @@ void WindowCreationHints::resetToDefault()
     glfwDefaultWindowHints();
 }
 
+void WindowCreationHints::apply() const
+{
+    std::for_each(m_boolHints.cbegin(), m_boolHints.cend(), [this](const std::pair<WindowHint, bool>& hint){
+        applyHint(hint.first, hint.second);
+    });
+    std::for_each(m_intHints.cbegin(), m_intHints.cend(), [this](const std::pair<WindowHint, int>& hint){
+        applyHint(hint.first, hint.second);
+    });
+}
+
+void WindowCreationHints::applyHint(WindowHint hint, bool value) const
+{
+    glfwWindowHint(glfwWindowHintValue(hint), value ? GLFW_TRUE :GLFW_FALSE);
+}
+
+void WindowCreationHints::applyHint(WindowHint hint, int value) const
+{
+    glfwWindowHint(glfwWindowHintValue(hint), value);
+}
+
 int glfwWindowHintValue(WindowHint hint)
 {
     switch(hint)
@@ -109,6 +129,32 @@ void windowPositionCallback(GLFWwindow* window, int x, int y)
 void windowRefreshCallback(GLFWwindow* window)
 {
     Window(window, Window::WindowOwnership::None).onRefresh();
+}
+
+Window::Window(GLFWwindow* window):
+      m_window(window), m_ownership(WindowOwnership::None)
+{
+    assert(window);
+}
+
+Window::Window(Window&& rhs)
+{
+    std::swap(m_window, rhs.m_window);
+    std::swap(m_ownership, rhs.m_ownership);
+}
+
+Window::~Window()
+{
+    if(m_window && m_ownership == WindowOwnership::Owner)
+    {
+        closeHandlers.erase(m_window);
+        sizeHandlers.erase(m_window);
+        framebufferSizeHandlers.erase(m_window);
+        positionHandlers.erase(m_window);
+        refreshHandlers.erase(m_window);
+
+        glfwDestroyWindow(m_window);
+    }
 }
 
 void Window::toggleFullscreen()
