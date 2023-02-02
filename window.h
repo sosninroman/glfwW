@@ -7,6 +7,7 @@
 #include <type_traits>
 #include "monitor.h"
 #include <functional>
+#include <optional>
 
 namespace glfwW
 {
@@ -44,16 +45,30 @@ enum class WindowHint
     //Monitor related hints
     REFRESH_RATE,
     //Context related hints
-//    CLIENT_API,
-//    CONTEXT_CREATION_API,
-//    CONTEXT_VERSION_MAJOR,
-//    CONTEXT_VERSION_MINOR,
+    CLIENT_API,
+    CONTEXT_CREATION_API,
+    CONTEXT_VERSION_MAJOR,
+    CONTEXT_VERSION_MINOR,
 //    OPENGL_FORWARD_COMPAT,
 //    OPENGL_DEBUG_CONTEXT,
 //    OPENGL_PROFILE,
 //    CONTEXT_ROBUSTNESS,
 //    CONTEXT_RELEASE_BEHAVIOR,
 //    CONTEXT_NO_ERROR
+};
+
+enum class ClientAPI
+{
+    NO_API,
+    OPENGL,
+    OPENGL_ES
+};
+
+enum class ContextCreationAPI
+{
+    NATIVE_CONTEXT_API,
+    EGL_CONTEXT_API,
+    OSMESA_CONTEXT_API
 };
 
 template<typename T, WindowHint hint>
@@ -90,8 +105,18 @@ constexpr bool isAppropriateHintType()
     case WindowHint::AUX_BUFFERS:
     case WindowHint::SAMPLES:
     case WindowHint::REFRESH_RATE:
+    case WindowHint::CONTEXT_VERSION_MAJOR:
+    case WindowHint::CONTEXT_VERSION_MINOR:
     {
         return std::is_same_v<T, int>;
+    }
+    case WindowHint::CLIENT_API:
+    {
+        return std::is_same_v<T, ClientAPI>;
+    }
+    case WindowHint::CONTEXT_CREATION_API:
+    {
+        return std::is_same_v<T, ContextCreationAPI>;
     }
     }
     return false;
@@ -123,6 +148,14 @@ public:
         {
             m_intHints[hint] = value;
         }
+        else if constexpr(std::is_same_v<T, ClientAPI>)
+        {
+            m_clientAPI = value;
+        }
+        else if constexpr(std::is_same_v<T, ClientAPI>)
+        {
+            m_contextCreationAPI = value;
+        }
         return *this;
     }
 
@@ -136,9 +169,13 @@ private:
     void apply() const;
     void applyHint(WindowHint hint, bool value) const;
     void applyHint(WindowHint hint, int value) const;
+    void applyHint(ClientAPI value) const;
+    void applyHint(ContextCreationAPI value) const;
 
     std::unordered_map<WindowHint, bool> m_boolHints;
     std::unordered_map<WindowHint, int> m_intHints;
+    std::optional<ClientAPI> m_clientAPI;
+    std::optional<ContextCreationAPI> m_contextCreationAPI;
 };
 
 void windowCloseCallback(GLFWwindow* window);

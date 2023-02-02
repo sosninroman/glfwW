@@ -9,6 +9,8 @@ void WindowCreationHints::clear()
 {
     m_boolHints.clear();
     m_intHints.clear();
+    m_clientAPI.reset();
+    m_contextCreationAPI.reset();
 }
 
 void WindowCreationHints::resetToDefault()
@@ -24,6 +26,14 @@ void WindowCreationHints::apply() const
     std::for_each(m_intHints.cbegin(), m_intHints.cend(), [this](const std::pair<WindowHint, int>& hint){
         applyHint(hint.first, hint.second);
     });
+    if(m_clientAPI)
+    {
+        applyHint(m_clientAPI.value());
+    }
+    if(m_contextCreationAPI)
+    {
+        applyHint(m_contextCreationAPI.value());
+    }
 }
 
 void WindowCreationHints::applyHint(WindowHint hint, bool value) const
@@ -34,6 +44,44 @@ void WindowCreationHints::applyHint(WindowHint hint, bool value) const
 void WindowCreationHints::applyHint(WindowHint hint, int value) const
 {
     glfwWindowHint(glfwWindowHintValue(hint), value);
+}
+
+void WindowCreationHints::applyHint(ClientAPI value) const
+{
+    switch(value)
+    {
+    case ClientAPI::NO_API:
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        break;
+    case ClientAPI::OPENGL:
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
+        break;
+    case ClientAPI::OPENGL_ES:
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+        break;
+    }
+}
+
+void WindowCreationHints::applyHint(ContextCreationAPI value) const
+{
+    switch(value)
+    {
+    case ContextCreationAPI::EGL_CONTEXT_API:
+    {
+        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
+        break;
+    }
+    case ContextCreationAPI::NATIVE_CONTEXT_API:
+    {
+        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_NATIVE_CONTEXT_API);
+        break;
+    }
+    case ContextCreationAPI::OSMESA_CONTEXT_API:
+    {
+        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_OSMESA_CONTEXT_API);
+        break;
+    }
+    }
 }
 
 int glfwWindowHintValue(WindowHint hint)
@@ -92,6 +140,26 @@ int glfwWindowHintValue(WindowHint hint)
         return GLFW_SAMPLES;
     case WindowHint::REFRESH_RATE:
         return GLFW_REFRESH_RATE;
+    case WindowHint::CLIENT_API:
+        return GLFW_CLIENT_API;
+    case WindowHint::CONTEXT_CREATION_API:
+        return GLFW_CONTEXT_CREATION_API;
+    case WindowHint::CONTEXT_VERSION_MAJOR:
+        return GLFW_CONTEXT_VERSION_MAJOR;
+    case WindowHint::CONTEXT_VERSION_MINOR:
+        return GLFW_CONTEXT_VERSION_MINOR;
+//    case WindowHint::OPENGL_FORWARD_COMPAT:
+//        return GLFW_OPENGL_FORWARD_COMPAT;
+//    case WindowHint::OPENGL_DEBUG_CONTEXT:
+//        return GLFW_OPENGL_DEBUG_CONTEXT;
+//    case WindowHint::OPENGL_PROFILE:
+//        return GLFW_OPENGL_PROFILE;
+//    case WindowHint::CONTEXT_ROBUSTNESS:
+//        return GLFW_CONTEXT_ROBUSTNESS;
+//    case WindowHint::CONTEXT_RELEASE_BEHAVIOR:
+//        return GLFW_CONTEXT_RELEASE_BEHAVIOR;
+//    case WindowHint::CONTEXT_NO_ERROR:
+//        return GLFW_CONTEXT_NO_ERROR;
     default:
         assert(false);
     }
