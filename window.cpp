@@ -231,6 +231,61 @@ Window::~Window()
     }
 }
 
+void Window::setCloseHandler(CloseHandler h)
+{
+    assert(m_window);
+    closeHandlers[m_window] = h;
+    glfwSetWindowCloseCallback(m_window, windowCloseCallback);
+}
+
+void Window::setSizeHandler(SizeHandler h)
+{
+    assert(m_window);
+    sizeHandlers[m_window] = h;
+    glfwSetWindowSizeCallback(m_window, windowSizeCallback);
+}
+
+bool Window::shouldClose() const
+{
+    return m_window && glfwWindowShouldClose(m_window);
+}
+
+void Window::setShouldClose(bool val) const
+{
+    if(m_window)
+    {
+        glfwSetWindowShouldClose(m_window, val ? GLFW_TRUE : GLFW_FALSE);
+    }
+}
+
+void Window::setSize(Vec2<int> size) const
+{
+    if(m_window)
+    {
+        glfwSetWindowSize(m_window, size.x, size.y);
+    }
+}
+
+Vec2<int> Window::getSize() const
+{
+    Vec2<int> result;
+    if(m_window)
+    {
+        glfwGetWindowSize(m_window, &result.x, &result.y);
+    }
+    return result;
+}
+
+FrameSize Window::getFrameSize() const
+{
+    FrameSize result;
+    if(m_window)
+    {
+        glfwGetWindowFrameSize(m_window, &result.left, &result.top, &result.right, &result.bottom);
+    }
+    return result;
+}
+
 void Window::toggleFullscreen()
 {
     if(!m_window)
@@ -240,6 +295,20 @@ void Window::toggleFullscreen()
     const auto monitor = getMonitor(*this);
     const auto mode = monitor.getVideoMode();
     setMonitor(monitor, {mode.width, mode.height}, mode.refreshRate);
+}
+
+void Window::setUserPointer(void* ptr) const
+{
+    if(!m_window)
+    {
+        return;
+    }
+    glfwSetWindowUserPointer(m_window, ptr);
+}
+
+void* Window::getUserPointer() const
+{
+    return glfwGetWindowUserPointer(m_window);
 }
 
 }

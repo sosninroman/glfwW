@@ -220,19 +220,16 @@ public:
 
     bool valid() const {return m_window;}
 
-    void setCloseHandler(CloseHandler h)
-    {
-        assert(m_window);
-        closeHandlers[m_window] = h;
-        glfwSetWindowCloseCallback(m_window, windowCloseCallback);
-    }
+    //Callbacks
+    /*!
+     * \brief Sets a close event callback. The callback function is called directly after the close flag has been set.
+     */
+    void setCloseHandler(CloseHandler h);
 
-    void setSizeHandler(SizeHandler h)
-    {
-        assert(m_window);
-        sizeHandlers[m_window] = h;
-        glfwSetWindowSizeCallback(m_window, windowSizeCallback);
-    }
+    /*!
+     * \brief Sets a size change callback. The callback function receives the new size, in screen coordinates, of the content area of the window when the window is resized.
+     */
+    void setSizeHandler(SizeHandler h);
 
     void setFramebufferSizeCallback(SizeHandler h)
     {
@@ -262,38 +259,36 @@ public:
         glfwSetWindowContentScaleCallback(m_window, windowContentScaleCallback);
     }
 
+    //Window closing
+    /*!
+     * \brief Returns true if the wrapper is valid and the window should be closed.
+     */
+    bool shouldClose() const;
 
     /*!
-     * \brief Make window's OpenGL context current
+     * \brief Set close flag for the window.
      */
-    void activate() const
-    {
-        if(m_window)
-        {
-            glfwMakeContextCurrent(m_window);
-        }
-    }
+    void setShouldClose(bool val) const;
 
-    bool shouldClose() const
-    {
-        return m_window && glfwWindowShouldClose(m_window);
-    }
+    //Window size
+    /*!
+     * \brief Sets window's size.
+     * For full screen windows, the specified size becomes the new resolution of the window's desired video mode.
+     * For windowed mode windows, this sets the size, in screen coordinates of the content area or content area of the window.
+     */
+    void setSize(Vec2<int> size) const;
 
-    void setShouldClose(bool val) const
-    {
-        if(m_window)
-        {
-            glfwSetWindowShouldClose(m_window, val ? GLFW_TRUE : GLFW_FALSE);
-        }
-    }
+    /*!
+     * \brief Returns a size of the window. The window size is in screen coordinates!!!
+     */
+    Vec2<int> getSize() const;
 
-    void swapBuffers() const
-    {
-        if(m_window)
-        {
-            glfwSwapBuffers(m_window);
-        }
-    }
+    /*!
+     * \brief Returns the distances, in screen coordinates, from the edges of the content area to the corresponding edges of the full window.
+     */
+    FrameSize getFrameSize() const;
+
+    //-----------
 
     /*!
      * \brief Turns the window in a fullscreen mode.
@@ -314,29 +309,6 @@ public:
     void setMonitor(Vec2<int> position, Vec2<int> size) const
     {
         glfwSetWindowMonitor(m_window, nullptr, position.x, position.y, size.x, size.y, 0);
-    }
-
-    /*!
-     * \brief Sets window's size.
-     * If the window is fullscreen it changes it's resolution.
-     * If the window is windowed it changes it's size.
-     */
-    void setSize(Vec2<int> size) const
-    {
-        if(m_window)
-        {
-            glfwSetWindowSize(m_window, size.x, size.y);
-        }
-    }
-
-    FrameSize getFrameSize() const
-    {
-        FrameSize result;
-        if(m_window)
-        {
-            glfwGetWindowFrameSize(m_window, &result.left, &result.top, &result.right, &result.bottom);
-        }
-        return result;
     }
 
     Vec2<int> getFramebufferSize() const
@@ -400,21 +372,33 @@ public:
     }
 
     /*!
+     * \brief Make window's OpenGL context current
+     */
+    void activate() const
+    {
+        if(m_window)
+        {
+            glfwMakeContextCurrent(m_window);
+        }
+    }
+
+    void swapBuffers() const
+    {
+        if(m_window)
+        {
+            glfwSwapBuffers(m_window);
+        }
+    }
+
+    /*!
      * \brief Returns the GLFW window handler
      */
     GLFWwindow* getHandler() const {return m_window;}
 
     bool ownHandler() const {return m_ownership == WindowOwnership::Owner;}
 
-    Vec2<int> getSize() const
-    {
-        Vec2<int> result;
-        if(m_window)
-        {
-            glfwGetWindowSize(m_window, &result.x, &result.y);
-        }
-        return result;
-    }
+    void setUserPointer(void* ptr) const;
+    void* getUserPointer() const;
 
 private:
     template<typename CallbacksContainerT, typename... Args>
