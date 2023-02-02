@@ -184,7 +184,6 @@ private:
     bool m_initialized = false;
     ErrorHandler* m_errorHandler = nullptr;
     WindowCreationHints m_currentHints;
-    //4. WindowCreationHints::apply -> private
 };
 
 }

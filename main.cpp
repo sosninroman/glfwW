@@ -42,8 +42,7 @@ int main()
     hints.addHint<glfwW::WindowHint::RESIZABLE>(false);
 
     glfwW::Window window = lib.createWindow(hints, {SCR_WIDTH, SCR_HEIGHT}, "glfwW demo");
-    glfwW::Window window2 = lib.createWindow({SCR_WIDTH, SCR_HEIGHT}, "glfwW demo (resizable)");
-    //glfwW::Window window = lib.createWindow(lib.getPrimaryMonitor(), "glfwW demo");
+
     if (!window.valid()) {
         return -1;
     }
@@ -60,9 +59,6 @@ int main()
     }
     window.activate();
     window.setFramebufferSizeCallback(framebufferSizeCallback);
-
-    window2.activate();
-    window2.setFramebufferSizeCallback(framebufferSizeCallback);
 
     while (!window.shouldClose())
     {

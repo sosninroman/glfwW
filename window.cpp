@@ -5,6 +5,12 @@
 namespace glfwW
 {
 
+void WindowCreationHints::clear()
+{
+    m_boolHints.clear();
+    m_intHints.clear();
+}
+
 void WindowCreationHints::resetToDefault()
 {
     glfwDefaultWindowHints();

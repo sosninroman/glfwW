@@ -126,6 +126,8 @@ public:
         return *this;
     }
 
+    void clear();
+
 private:
     friend class GLFWlibrary;
 
