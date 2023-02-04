@@ -49,9 +49,9 @@ enum class WindowHint
     CONTEXT_CREATION_API,
     CONTEXT_VERSION_MAJOR,
     CONTEXT_VERSION_MINOR,
-//    OPENGL_FORWARD_COMPAT,
-//    OPENGL_DEBUG_CONTEXT,
-//    OPENGL_PROFILE,
+    OPENGL_FORWARD_COMPAT,
+    OPENGL_DEBUG_CONTEXT,
+    OPENGL_PROFILE,
 //    CONTEXT_ROBUSTNESS,
 //    CONTEXT_RELEASE_BEHAVIOR,
 //    CONTEXT_NO_ERROR
@@ -69,6 +69,13 @@ enum class ContextCreationAPI
     NATIVE_CONTEXT_API,
     EGL_CONTEXT_API,
     OSMESA_CONTEXT_API
+};
+
+enum class OpenGLProfile
+{
+    OPENGL_ANY_PROFILE,
+    OPENGL_COMPAT_PROFILE,
+    OPENGL_CORE_PROFILE
 };
 
 template<typename T, WindowHint hint>
@@ -89,6 +96,8 @@ constexpr bool isAppropriateHintType()
     case WindowHint::SCALE_TO_MONITOR:
     case WindowHint::SRGB_CAPABLE:
     case WindowHint::DOUBLE_BUFFER:
+    case WindowHint::OPENGL_FORWARD_COMPAT:
+    case WindowHint::OPENGL_DEBUG_CONTEXT:
     {
         return std::is_same_v<T, bool>;
     }
@@ -117,6 +126,10 @@ constexpr bool isAppropriateHintType()
     case WindowHint::CONTEXT_CREATION_API:
     {
         return std::is_same_v<T, ContextCreationAPI>;
+    }
+    case WindowHint::OPENGL_PROFILE:
+    {
+        return std::is_same_v<T, OpenGLProfile>;
     }
     }
     return false;
@@ -156,6 +169,10 @@ public:
         {
             m_contextCreationAPI = value;
         }
+        else if constexpr(std::is_same_v<T, OpenGLProfile>)
+        {
+            m_openGlProfile = value;
+        }
         return *this;
     }
 
@@ -171,11 +188,13 @@ private:
     void applyHint(WindowHint hint, int value) const;
     void applyHint(ClientAPI value) const;
     void applyHint(ContextCreationAPI value) const;
+    void applyHint(OpenGLProfile value) const;
 
     std::unordered_map<WindowHint, bool> m_boolHints;
     std::unordered_map<WindowHint, int> m_intHints;
     std::optional<ClientAPI> m_clientAPI;
     std::optional<ContextCreationAPI> m_contextCreationAPI;
+    std::optional<OpenGLProfile> m_openGlProfile;
 };
 
 void windowCloseCallback(GLFWwindow* window);

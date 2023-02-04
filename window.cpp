@@ -34,6 +34,10 @@ void WindowCreationHints::apply() const
     {
         applyHint(m_contextCreationAPI.value());
     }
+    if(m_openGlProfile)
+    {
+        applyHint(m_openGlProfile.value());
+    }
 }
 
 void WindowCreationHints::applyHint(WindowHint hint, bool value) const
@@ -79,6 +83,28 @@ void WindowCreationHints::applyHint(ContextCreationAPI value) const
     case ContextCreationAPI::OSMESA_CONTEXT_API:
     {
         glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_OSMESA_CONTEXT_API);
+        break;
+    }
+    }
+}
+
+void WindowCreationHints::applyHint(OpenGLProfile value) const
+{
+    switch(value)
+    {
+    case OpenGLProfile::OPENGL_ANY_PROFILE:
+    {
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_ANY_PROFILE);
+        break;
+    }
+    case OpenGLProfile::OPENGL_COMPAT_PROFILE:
+    {
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
+        break;
+    }
+    case OpenGLProfile::OPENGL_CORE_PROFILE:
+    {
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         break;
     }
     }
@@ -148,10 +174,10 @@ int glfwWindowHintValue(WindowHint hint)
         return GLFW_CONTEXT_VERSION_MAJOR;
     case WindowHint::CONTEXT_VERSION_MINOR:
         return GLFW_CONTEXT_VERSION_MINOR;
-//    case WindowHint::OPENGL_FORWARD_COMPAT:
-//        return GLFW_OPENGL_FORWARD_COMPAT;
-//    case WindowHint::OPENGL_DEBUG_CONTEXT:
-//        return GLFW_OPENGL_DEBUG_CONTEXT;
+    case WindowHint::OPENGL_FORWARD_COMPAT:
+        return GLFW_OPENGL_FORWARD_COMPAT;
+    case WindowHint::OPENGL_DEBUG_CONTEXT:
+        return GLFW_OPENGL_DEBUG_CONTEXT;
 //    case WindowHint::OPENGL_PROFILE:
 //        return GLFW_OPENGL_PROFILE;
 //    case WindowHint::CONTEXT_ROBUSTNESS:
