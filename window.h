@@ -397,6 +397,7 @@ public:
 
     bool ownHandler() const {return m_ownership == WindowOwnership::Owner;}
 
+    //USER POINTER
     void setUserPointer(void* ptr) const;
     void* getUserPointer() const;
 
