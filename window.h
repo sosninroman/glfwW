@@ -52,9 +52,9 @@ enum class WindowHint
     OPENGL_FORWARD_COMPAT,
     OPENGL_DEBUG_CONTEXT,
     OPENGL_PROFILE,
-//    CONTEXT_ROBUSTNESS,
-//    CONTEXT_RELEASE_BEHAVIOR,
-//    CONTEXT_NO_ERROR
+    CONTEXT_ROBUSTNESS,
+    CONTEXT_RELEASE_BEHAVIOR,
+    CONTEXT_NO_ERROR
 };
 
 enum class ClientAPI
@@ -78,6 +78,20 @@ enum class OpenGLProfile
     OPENGL_CORE_PROFILE
 };
 
+enum class ContextRobustness
+{
+    NO_ROBUSTNESS,
+    NO_RESET_NOTIFICATION,
+    LOSE_CONTEXT_ON_RESET
+};
+
+enum class ContextReleaseBehavior
+{
+    ANY_RELEASE_BEHAVIOR,
+    RELEASE_BEHAVIOR_FLUSH,
+    RELEASE_BEHAVIOR_NONE
+};
+
 template<typename T, WindowHint hint>
 constexpr bool isAppropriateHintType()
 {
@@ -98,6 +112,7 @@ constexpr bool isAppropriateHintType()
     case WindowHint::DOUBLE_BUFFER:
     case WindowHint::OPENGL_FORWARD_COMPAT:
     case WindowHint::OPENGL_DEBUG_CONTEXT:
+    case WindowHint::CONTEXT_NO_ERROR:
     {
         return std::is_same_v<T, bool>;
     }
@@ -130,6 +145,14 @@ constexpr bool isAppropriateHintType()
     case WindowHint::OPENGL_PROFILE:
     {
         return std::is_same_v<T, OpenGLProfile>;
+    }
+    case WindowHint::CONTEXT_ROBUSTNESS:
+    {
+        return std::is_same_v<T, ContextRobustness>;
+    }
+    case WindowHint::CONTEXT_RELEASE_BEHAVIOR:
+    {
+        return std::is_same_v<T, ContextReleaseBehavior>;
     }
     }
     return false;
@@ -173,6 +196,14 @@ public:
         {
             m_openGlProfile = value;
         }
+        else if constexpr(std::is_same_v<T, ContextRobustness>)
+        {
+            m_contextRobustness = value;
+        }
+        else if constexpr(std::is_same_v<T, ContextReleaseBehavior>)
+        {
+            m_contextReleaseBehavior = value;
+        }
         return *this;
     }
 
@@ -189,12 +220,16 @@ private:
     void applyHint(ClientAPI value) const;
     void applyHint(ContextCreationAPI value) const;
     void applyHint(OpenGLProfile value) const;
+    void applyHint(ContextRobustness value) const;
+    void applyHint(ContextReleaseBehavior value) const;
 
     std::unordered_map<WindowHint, bool> m_boolHints;
     std::unordered_map<WindowHint, int> m_intHints;
     std::optional<ClientAPI> m_clientAPI;
     std::optional<ContextCreationAPI> m_contextCreationAPI;
     std::optional<OpenGLProfile> m_openGlProfile;
+    std::optional<ContextRobustness> m_contextRobustness;
+    std::optional<ContextReleaseBehavior> m_contextReleaseBehavior;
 };
 
 void windowCloseCallback(GLFWwindow* window);

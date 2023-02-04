@@ -38,6 +38,14 @@ void WindowCreationHints::apply() const
     {
         applyHint(m_openGlProfile.value());
     }
+    if(m_contextRobustness)
+    {
+        applyHint(m_contextRobustness.value());
+    }
+    if(m_contextReleaseBehavior)
+    {
+        applyHint(m_contextReleaseBehavior.value());
+    }
 }
 
 void WindowCreationHints::applyHint(WindowHint hint, bool value) const
@@ -105,6 +113,50 @@ void WindowCreationHints::applyHint(OpenGLProfile value) const
     case OpenGLProfile::OPENGL_CORE_PROFILE:
     {
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        break;
+    }
+    }
+}
+
+void WindowCreationHints::applyHint(ContextRobustness value) const
+{
+    switch(value)
+    {
+    case ContextRobustness::NO_ROBUSTNESS:
+    {
+        glfwWindowHint(GLFW_CONTEXT_ROBUSTNESS, GLFW_NO_ROBUSTNESS);
+        break;
+    }
+    case ContextRobustness::NO_RESET_NOTIFICATION:
+    {
+        glfwWindowHint(GLFW_CONTEXT_ROBUSTNESS, GLFW_NO_RESET_NOTIFICATION);
+        break;
+    }
+    case ContextRobustness::LOSE_CONTEXT_ON_RESET:
+    {
+        glfwWindowHint(GLFW_CONTEXT_ROBUSTNESS, GLFW_LOSE_CONTEXT_ON_RESET);
+        break;
+    }
+    }
+}
+
+void WindowCreationHints::applyHint(ContextReleaseBehavior value) const
+{
+    switch(value)
+    {
+    case ContextReleaseBehavior::ANY_RELEASE_BEHAVIOR:
+    {
+        glfwWindowHint(GLFW_CONTEXT_RELEASE_BEHAVIOR, GLFW_ANY_RELEASE_BEHAVIOR);
+        break;
+    }
+    case ContextReleaseBehavior::RELEASE_BEHAVIOR_FLUSH:
+    {
+        glfwWindowHint(GLFW_CONTEXT_RELEASE_BEHAVIOR, GLFW_RELEASE_BEHAVIOR_FLUSH);
+        break;
+    }
+    case ContextReleaseBehavior::RELEASE_BEHAVIOR_NONE:
+    {
+        glfwWindowHint(GLFW_CONTEXT_RELEASE_BEHAVIOR, GLFW_RELEASE_BEHAVIOR_NONE);
         break;
     }
     }
@@ -178,14 +230,14 @@ int glfwWindowHintValue(WindowHint hint)
         return GLFW_OPENGL_FORWARD_COMPAT;
     case WindowHint::OPENGL_DEBUG_CONTEXT:
         return GLFW_OPENGL_DEBUG_CONTEXT;
-//    case WindowHint::OPENGL_PROFILE:
-//        return GLFW_OPENGL_PROFILE;
-//    case WindowHint::CONTEXT_ROBUSTNESS:
-//        return GLFW_CONTEXT_ROBUSTNESS;
-//    case WindowHint::CONTEXT_RELEASE_BEHAVIOR:
-//        return GLFW_CONTEXT_RELEASE_BEHAVIOR;
-//    case WindowHint::CONTEXT_NO_ERROR:
-//        return GLFW_CONTEXT_NO_ERROR;
+    case WindowHint::OPENGL_PROFILE:
+        return GLFW_OPENGL_PROFILE;
+    case WindowHint::CONTEXT_ROBUSTNESS:
+        return GLFW_CONTEXT_ROBUSTNESS;
+    case WindowHint::CONTEXT_RELEASE_BEHAVIOR:
+        return GLFW_CONTEXT_RELEASE_BEHAVIOR;
+    case WindowHint::CONTEXT_NO_ERROR:
+        return GLFW_CONTEXT_NO_ERROR;
     default:
         assert(false);
     }
