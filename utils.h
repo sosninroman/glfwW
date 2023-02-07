@@ -15,7 +15,7 @@ T toGLFWBool(bool val)
 }
 
 std::vector<Monitor> getMonitors();
-Monitor getMonitor(const Window& window);
+Monitor getContainingMonitor(const Window& window);
 WindowCreationHints currentWindowCreationHints();
 
 }

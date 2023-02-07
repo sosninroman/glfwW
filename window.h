@@ -8,6 +8,7 @@
 #include "monitor.h"
 #include <functional>
 #include <optional>
+#include <vector>
 
 namespace glfwW
 {
@@ -238,6 +239,9 @@ void windowFramebufferSizeCallback(GLFWwindow* window, int width, int height);
 void windowContentScaleCallback(GLFWwindow* window, float xscale, float yscale);
 void windowPositionCallback(GLFWwindow* window, int x, int y);
 void windowRefreshCallback(GLFWwindow* window);
+void windowMinimizeCallback(GLFWwindow* window, int iconified);
+void windowMaximizeCallback(GLFWwindow* window, int maximized);
+void windowFocusCallback(GLFWwindow* window, int focused);
 
 class Window
 {
@@ -249,12 +253,24 @@ class Window
     friend void windowContentScaleCallback(GLFWwindow* window, float xscale, float yscale);
     friend void windowPositionCallback(GLFWwindow* window, int x, int y);
     friend void windowRefreshCallback(GLFWwindow* window);
+    friend void windowMinimizeCallback(GLFWwindow* window, int iconified);
+    friend void windowMaximizeCallback(GLFWwindow* window, int maximized);
+    friend void windowFocusCallback(GLFWwindow* window, int focused);
 public:
     typedef void(* CloseHandler) (const Window&);
     typedef void(* SizeHandler) (const Window&, Vec2<int>);
     typedef void(* ScaleHandler) (const Window&, Vec2<float>);
     typedef void(* PositionHandler) (const Window&, Vec2<int>);
     typedef void(* RefreshHandler) (const Window&);
+    typedef void(* MinimizeHandler) (const Window&);
+    typedef void(* MaximizeHandler) (const Window&);
+    enum class RestoreMode
+    {
+        FromMinimized,
+        FromMaximized
+    };
+    typedef void(* RestoreHandler) (const Window&, RestoreMode);
+    typedef void(* FocusHandler) (const Window&, bool);
 
     enum class WindowOwnership
     {
@@ -274,30 +290,51 @@ public:
 
     bool valid() const {return m_window;}
 
-    //Callbacks
+    // CALLBACKS
     /*!
      * \brief Sets a close event callback. The callback function is called directly after the close flag has been set.
      */
-    void setCloseHandler(CloseHandler h);
+    void setCloseHandler(CloseHandler h) const;
 
     /*!
      * \brief Sets a size change callback. The callback function receives the new size, in screen coordinates, of the content area of the window when the window is resized.
      */
-    void setSizeHandler(SizeHandler h);
+    void setSizeHandler(SizeHandler h) const;
 
-    void setFramebufferSizeCallback(SizeHandler h)
-    {
-        assert(m_window);
-        framebufferSizeHandlers[m_window] = h;
-        glfwSetFramebufferSizeCallback(m_window, windowFramebufferSizeCallback);
-    }
+    /*!
+     * \brief Set a framebuffer size change callback. The callback function receives the new size of the framebuffer, in pixels.
+     */
+    void setFramebufferSizeCallback(SizeHandler h) const;
 
-    void setPositionHandler(PositionHandler h)
-    {
-        assert(m_window);
-        positionHandlers[m_window] = h;
-        glfwSetWindowPosCallback(m_window, windowPositionCallback);
-    }
+    /*!
+     * \brief Set a window's content scale handler.
+     */
+    void setContentScaleHandler(ScaleHandler h) const;
+
+    /*!
+     * \brief Sets a window's position handler. The callback function receives the new position, in screen coordinates, of the upper-left corner of the content area when the window is moved.
+     */
+    void setPositionHandler(PositionHandler h) const;
+
+    /*!
+     * \brief Sets a minimization event handler.
+     */
+    void setMinimizeHandler(MinimizeHandler h) const;
+
+    /*!
+     * \brief Sets a maximization event handler.
+     */
+    void setMaximizeHandler(MaximizeHandler h) const;
+
+    /*!
+     * \brief Sets a restore event handler.
+     */
+    void setRestoreHandler(RestoreHandler h) const;
+
+    /*!
+     * \brief Sets a focus change callback. The callback function receives when the window gains or loses input focus, whether by the user, system or client code.
+     */
+    void setFocusHandler(FocusHandler h) const;
 
     void setRefreshHandler(RefreshHandler h)
     {
@@ -306,14 +343,7 @@ public:
         glfwSetWindowRefreshCallback(m_window, windowRefreshCallback);
     }
 
-    void setContentScaleHandler(ScaleHandler h) const
-    {
-        assert(m_window);
-        constentScaleHandlers[m_window] = h;
-        glfwSetWindowContentScaleCallback(m_window, windowContentScaleCallback);
-    }
-
-    //Window closing
+    //WINDOW CLOSING
     /*!
      * \brief Returns true if the wrapper is valid and the window should be closed.
      */
@@ -324,7 +354,7 @@ public:
      */
     void setShouldClose(bool val) const;
 
-    //Window size
+    // WINDOW SIZE
     /*!
      * \brief Sets window's size.
      * For full screen windows, the specified size becomes the new resolution of the window's desired video mode.
@@ -342,88 +372,158 @@ public:
      */
     FrameSize getFrameSize() const;
 
-    //-----------
+    enum class SizeHint
+    {
+        Min,
+        Max
+    };
 
     /*!
-     * \brief Turns the window in a fullscreen mode.
+     * \brief Sets window size limits.
+     * ! If the window is full screen, the size limits only take effect once it is made windowed. If the window is not resizable, this function does nothing.
+     */
+    void setSizeLimits(int width, int height, SizeHint hint);
+
+    /*!
+     * \brief Sets window size limits.
+     * ! If the window is full screen, the size limits only take effect once it is made windowed. If the window is not resizable, this function does nothing.
+     */
+    void setSizeLimits(int minWidth, int minHeight, int maxWidth, int maxHeight);
+
+    /*!
+     * \brief Changes aspect ration of the window.
+     */
+    void setAspectRatio(int numer, int denom);
+
+    /*!
+     * \brief Disable an aspect ratio setting for the window.
+     */
+    void disableAspectRatio();
+
+    /*!
+     * \brief Uses current window's size as an aspect ratio.
+     */
+    void setCurrentSizeAsAspectRatio();
+
+    // FRAMEBUFFER SIZE
+    /*!
+     * \brief Return a size of the framebuffer of the window. Framebuffer size is measured in pixels.
+     */
+    Vec2<int> getFramebufferSize() const;
+
+    // CONTENT SCALE
+    /*!
+     * \brief Returns the ratio between the current DPI and the platform's default DPI for the window.
+     */
+    Vec2<float> getContentScale() const;
+
+    // WINDOW'S POSITION
+    /*!
+     * \brief Returns the window's upper-left corner in screen coordinate.
+     */
+    Vec2<int> getPosition() const;
+
+    /*!
+     * \brief Changes the window's upper-left corner in screen coordinate.
+     */
+    void setPosition(Vec2<int> position);
+
+    // TITLE AND ICON
+    /*!
+     * \brief Set the window's title, encoded as UTF-8.
+     */
+    void setTitle(const char* str);
+
+    /*!
+     * \brief Sets icon.
+     * ! If passed an array of candidate images, those of or closest to the sizes desired by the system are selected.
+     */
+    void setIcon(const std::vector<GLFWimage>& icons);
+
+    // FULLSCREEN \ WINDOWED
+    // !Full screen windows are associated with a specific monitor.
+    /*!
+     * \brief Returns true if the window is in fullscreen mode. Otherwise returns false.
+     */
+    bool isFullscreen() const;
+
+    /*!
+     * \brief Turns the window in a windowed mode.
+     */
+    void toggleWindowed(Vec2<int> position, Vec2<int> size) const;
+
+    /*!
+     * \brief Turns the window in a fullscreen mode into it's current monitor.
      */
     void toggleFullscreen();
 
     /*!
-     * \brief Sets monitor for the windowed  mode
+     * \brief Turns the window in a fullscreen mode into the specified monitor.
      */
-    void setMonitor(const Monitor& monitor, Vec2<int> size, int refreshRate) const
-    {
-        glfwSetWindowMonitor(m_window, monitor.getHandler(), 0, 0, size.x, size.y, refreshRate);
-    }
+    void toggleFullscreen(const Monitor& monitor, Vec2<int> size, int refreshRate) const;
+
+    //MINIMAZE \ MAXIMAZE \ VISIBILITY
 
     /*!
-     * \brief Sets monitor for the windowed mode
+     * \brief Minimizes the window.
+     * ! When a full screen window is minimized, the original video mode of its monitor is restored until the user or application restores the window.
      */
-    void setMonitor(Vec2<int> position, Vec2<int> size) const
-    {
-        glfwSetWindowMonitor(m_window, nullptr, position.x, position.y, size.x, size.y, 0);
-    }
+    void minimize();
 
-    Vec2<int> getFramebufferSize() const
-    {
-        Vec2<int> result;
-        if(m_window)
-        {
-            glfwGetFramebufferSize(m_window, &result.x, &result.y);
-        }
-        return result;
-    }
+    /*!
+     * \brief Returns true if the window can be minimized.
+     */
+    bool isMinimizeable() const;
 
-    void setSizeLimits(int minWidth, int minHeight, int maxWidth, int maxHeight)
-    {
-        if(m_window)
-        {
-            glfwSetWindowSizeLimits(m_window, minWidth, minHeight, maxWidth, maxHeight);
-        }
-    }
+    /*!
+     * \brief Maximizes the window.
+     * ! Fullscreen windows cannot be maximized and this function does nothing for a fullscreen window.
+     */
+    void maximize();
 
-    void setAspectRatio(int numer, int denom)
-    {
-        if(m_window)
-        {
-            glfwSetWindowAspectRatio(m_window, numer, denom);
-        }
-    }
+    /*!
+     * \brief Returns true if the window can be maximized.
+     */
+    bool isMaximizeable() const;
 
-    Vec2<int> getPosition() const
-    {
-        Vec2<int> result;
-        if(m_window)
-        {
-            glfwGetWindowPos(m_window, &result.x, &result.y);
-        }
-        return result;
-    }
+    /*!
+     * \brief Restores initial size of minimized (maximized) fullscrean window.
+     * ! When a full screen window is restored, the desired video mode is restored to its monitor as well.
+     */
+    void restore();
 
-    void setPosition(Vec2<int> position) const
-    {
-        if(m_window)
-        {
-            glfwSetWindowPos(m_window, position.x, position.y);
-        }
-    }
+    /*!
+     * \brief Hides a windowed window. Does nothing if the window is fullscreen.
+     */
+    void hide();
 
-    void hide() const
-    {
-        if(m_window)
-        {
-            glfwHideWindow(m_window);
-        }
-    }
+    /*!
+     * \brief Shows a hidden window.
+     */
+    void show();
 
-    void show() const
-    {
-        if(m_window)
-        {
-            glfwShowWindow(m_window);
-        }
-    }
+    /*!
+     * \brief Returns true if the window is visible.
+     * \return
+     */
+    bool isVisible() const;
+
+    // FOCUS \ ATTENTION
+    /*!
+     * \brief Gives an input focus to the window and bring it to the front.
+     */
+    void setFocus();
+
+    /*!
+     * \brief Returns true if the window is focused.
+     */
+    bool isFocused() const;
+
+    /*!
+     * \brief Notifies the user of an event inside the window.
+     */
+    void requestAttention();
+    //-----------
 
     /*!
      * \brief Make window's OpenGL context current
@@ -444,17 +544,19 @@ public:
         }
     }
 
+
+
+    // USER POINTER
+    void setUserPointer(void* ptr) const;
+    void* getUserPointer() const;
+
+    // HANDLER
     /*!
      * \brief Returns the GLFW window handler
      */
     GLFWwindow* getHandler() const {return m_window;}
 
     bool ownHandler() const {return m_ownership == WindowOwnership::Owner;}
-
-    //USER POINTER
-    void setUserPointer(void* ptr) const;
-    void* getUserPointer() const;
-
 private:
     template<typename CallbacksContainerT, typename... Args>
     void tryInvokeCallback(const CallbacksContainerT& callbacksContainer, Args... args) const
@@ -496,6 +598,26 @@ private:
         tryInvokeCallback(refreshHandlers);
     }
 
+    void onMinimized() const
+    {
+        tryInvokeCallback(minimizeHandlers);
+    }
+
+    void onMaximized() const
+    {
+        tryInvokeCallback(maximizeHandlers);
+    }
+
+    void onRestored(RestoreMode mode) const
+    {
+        tryInvokeCallback(restoreHandlers, mode);
+    }
+
+    void onFocused(bool focused) const
+    {
+        tryInvokeCallback(focusHandlers, focused);
+    }
+
     GLFWwindow* m_window = nullptr;
 
     static std::unordered_map<GLFWwindow*, CloseHandler> closeHandlers;
@@ -504,6 +626,10 @@ private:
     static std::unordered_map<GLFWwindow*, PositionHandler> positionHandlers;
     static std::unordered_map<GLFWwindow*, RefreshHandler> refreshHandlers;
     static std::unordered_map<GLFWwindow*, ScaleHandler> constentScaleHandlers;
+    static std::unordered_map<GLFWwindow*, MinimizeHandler> minimizeHandlers;
+    static std::unordered_map<GLFWwindow*, MaximizeHandler> maximizeHandlers;
+    static std::unordered_map<GLFWwindow*, RestoreHandler> restoreHandlers;
+    static std::unordered_map<GLFWwindow*, FocusHandler> focusHandlers;
 
     WindowOwnership m_ownership = WindowOwnership::None;
 };

@@ -17,7 +17,7 @@ std::vector<Monitor> getMonitors()
     return result;
 }
 
-Monitor getMonitor(const Window& window)
+Monitor getContainingMonitor(const Window& window)
 {
     const auto monitors = getMonitors();
 

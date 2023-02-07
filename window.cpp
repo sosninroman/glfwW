@@ -250,6 +250,10 @@ std::unordered_map<GLFWwindow*, Window::SizeHandler> Window::framebufferSizeHand
 std::unordered_map<GLFWwindow*, Window::SizeHandler> Window::positionHandlers;
 std::unordered_map<GLFWwindow*, Window::RefreshHandler> Window::refreshHandlers;
 std::unordered_map<GLFWwindow*, Window::ScaleHandler> Window::constentScaleHandlers;
+std::unordered_map<GLFWwindow*, Window::MinimizeHandler> Window::minimizeHandlers;
+std::unordered_map<GLFWwindow*, Window::MaximizeHandler> Window::maximizeHandlers;
+std::unordered_map<GLFWwindow*, Window::RestoreHandler> Window::restoreHandlers;
+std::unordered_map<GLFWwindow*, Window::FocusHandler> Window::focusHandlers;
 
 void windowCloseCallback(GLFWwindow* window)
 {
@@ -283,6 +287,35 @@ void windowRefreshCallback(GLFWwindow* window)
     Window(window, Window::WindowOwnership::None).onRefresh();
 }
 
+void windowMinimizeCallback(GLFWwindow* window, int iconified)
+{
+    if (iconified)
+    {
+        Window(window, Window::WindowOwnership::None).onMinimized();
+    }
+    else
+    {
+        Window(window, Window::WindowOwnership::None).onRestored(Window::RestoreMode::FromMinimized);
+    }
+}
+
+void windowMaximizeCallback(GLFWwindow* window, int maximized)
+{
+    if (maximized)
+    {
+        Window(window, Window::WindowOwnership::None).onMaximized();
+    }
+    else
+    {
+        Window(window, Window::WindowOwnership::None).onRestored(Window::RestoreMode::FromMaximized);
+    }
+}
+
+void windowFocusCallback(GLFWwindow* window, int focused)
+{
+    Window(window, Window::WindowOwnership::None).onFocused(focused);
+}
+
 Window::Window(GLFWwindow* window):
       m_window(window), m_ownership(WindowOwnership::None)
 {
@@ -309,18 +342,68 @@ Window::~Window()
     }
 }
 
-void Window::setCloseHandler(CloseHandler h)
+void Window::setCloseHandler(CloseHandler h) const
 {
     assert(m_window);
     closeHandlers[m_window] = h;
     glfwSetWindowCloseCallback(m_window, windowCloseCallback);
 }
 
-void Window::setSizeHandler(SizeHandler h)
+void Window::setSizeHandler(SizeHandler h) const
 {
     assert(m_window);
     sizeHandlers[m_window] = h;
     glfwSetWindowSizeCallback(m_window, windowSizeCallback);
+}
+
+void Window::setFramebufferSizeCallback(SizeHandler h) const
+{
+    assert(m_window);
+    framebufferSizeHandlers[m_window] = h;
+    glfwSetFramebufferSizeCallback(m_window, windowFramebufferSizeCallback);
+}
+
+void Window::setContentScaleHandler(ScaleHandler h) const
+{
+    assert(m_window);
+    constentScaleHandlers[m_window] = h;
+    glfwSetWindowContentScaleCallback(m_window, windowContentScaleCallback);
+}
+
+void Window::setPositionHandler(PositionHandler h) const
+{
+    assert(m_window);
+    positionHandlers[m_window] = h;
+    glfwSetWindowPosCallback(m_window, windowPositionCallback);
+}
+
+void Window::setMinimizeHandler(MinimizeHandler h) const
+{
+    assert(m_window);
+    minimizeHandlers[m_window] = h;
+    glfwSetWindowIconifyCallback(m_window, windowMinimizeCallback);
+}
+
+void Window::setMaximizeHandler(MaximizeHandler h) const
+{
+    assert(m_window);
+    maximizeHandlers[m_window] = h;
+    glfwSetWindowMaximizeCallback(m_window, windowMaximizeCallback);
+}
+
+void Window::setRestoreHandler(RestoreHandler h) const
+{
+    assert(m_window);
+    restoreHandlers[m_window] = h;
+    glfwSetWindowIconifyCallback(m_window, windowMinimizeCallback);
+    glfwSetWindowMaximizeCallback(m_window, windowMaximizeCallback);
+}
+
+void Window::setFocusHandler(FocusHandler h) const
+{
+    assert(m_window);
+    focusHandlers[m_window] = h;
+    glfwSetWindowFocusCallback(m_window, windowFocusCallback);
 }
 
 bool Window::shouldClose() const
@@ -364,15 +447,209 @@ FrameSize Window::getFrameSize() const
     return result;
 }
 
+void Window::setSizeLimits(int width, int height, SizeHint hint)
+{
+    if(m_window)
+    {
+        switch(hint)
+        {
+        case SizeHint::Min:
+            glfwSetWindowSizeLimits(m_window, width, height, GLFW_DONT_CARE, GLFW_DONT_CARE);
+            break;
+        case SizeHint::Max:
+            glfwSetWindowSizeLimits(m_window, GLFW_DONT_CARE, GLFW_DONT_CARE, width, height);
+            break;
+        }
+    }
+}
+
+void Window::setSizeLimits(int minWidth, int minHeight, int maxWidth, int maxHeight)
+{
+    if(m_window)
+    {
+        glfwSetWindowSizeLimits(m_window, minWidth, minHeight, maxWidth, maxHeight);
+    }
+}
+
+void Window::setAspectRatio(int numer, int denom)
+{
+    if(m_window)
+    {
+        glfwSetWindowAspectRatio(m_window, numer, denom);
+    }
+}
+
+void Window::disableAspectRatio()
+{
+    if(m_window)
+    {
+        glfwSetWindowAspectRatio(m_window, GLFW_DONT_CARE, GLFW_DONT_CARE);
+    }
+}
+
+void Window::setCurrentSizeAsAspectRatio()
+{
+    if(m_window)
+    {
+        const auto size = getSize();
+        setAspectRatio(size.x, size.y);
+    }
+}
+
+Vec2<int> Window::getFramebufferSize() const
+{
+    Vec2<int> result;
+    if(m_window)
+    {
+        glfwGetFramebufferSize(m_window, &result.x, &result.y);
+    }
+    return result;
+}
+
+Vec2<float> Window::getContentScale() const
+{
+    Vec2<float> result;
+    if(m_window)
+    {
+        glfwGetWindowContentScale(m_window, &result.x, &result.y);
+    }
+    return result;
+}
+
+Vec2<int> Window::getPosition() const
+{
+    Vec2<int> result;
+    if(m_window)
+    {
+        glfwGetWindowPos(m_window, &result.x, &result.y);
+    }
+    return result;
+}
+
+void Window::setPosition(Vec2<int> position)
+{
+    if(m_window)
+    {
+        glfwSetWindowPos(m_window, position.x, position.y);
+    }
+}
+
+void Window::setTitle(const char* str)
+{
+    if(m_window && str)
+    {
+        glfwSetWindowTitle(m_window, str);
+    }
+}
+
+void Window::setIcon(const std::vector<GLFWimage>& icons)
+{
+    if(m_window)
+    {
+        glfwSetWindowIcon(m_window, icons.size(), icons.data());
+    }
+}
+
+bool Window::isFullscreen() const
+{
+    return  m_window && glfwGetWindowMonitor(m_window);
+}
+
+void Window::toggleWindowed(Vec2<int> position, Vec2<int> size) const
+{
+    glfwSetWindowMonitor(m_window, nullptr, position.x, position.y, size.x, size.y, 0);
+}
+
 void Window::toggleFullscreen()
 {
     if(!m_window)
     {
         return;
     }
-    const auto monitor = getMonitor(*this);
+    const auto monitor = getContainingMonitor(*this);
     const auto mode = monitor.getVideoMode();
-    setMonitor(monitor, {mode.width, mode.height}, mode.refreshRate);
+    toggleFullscreen(monitor, {mode.width, mode.height}, mode.refreshRate);
+}
+
+void Window::toggleFullscreen(const Monitor& monitor, Vec2<int> size, int refreshRate) const
+{
+    glfwSetWindowMonitor(m_window, monitor.getHandler(), 0, 0, size.x, size.y, refreshRate);
+}
+
+void Window::minimize()
+{
+    if(m_window)
+    {
+        glfwIconifyWindow(m_window);
+    }
+}
+
+bool Window::isMinimizeable() const
+{
+    return m_window && glfwGetWindowAttrib(m_window, GLFW_ICONIFIED);
+}
+
+void Window::maximize()
+{
+    if(m_window)
+    {
+        glfwMaximizeWindow(m_window);
+    }
+}
+
+bool Window::isMaximizeable() const
+{
+    return m_window && glfwGetWindowAttrib(m_window, GLFW_MAXIMIZED);
+}
+
+void Window::restore()
+{
+    if(m_window)
+    {
+        glfwRestoreWindow(m_window);
+    }
+}
+
+void Window::hide()
+{
+    if(m_window)
+    {
+        glfwHideWindow(m_window);
+    }
+}
+
+void Window::show()
+{
+    if(m_window)
+    {
+        glfwShowWindow(m_window);
+    }
+}
+
+bool Window::isVisible() const
+{
+    return m_window && glfwGetWindowAttrib(m_window, GLFW_VISIBLE);
+}
+
+void Window::setFocus()
+{
+    if (m_window)
+    {
+        glfwFocusWindow(m_window);
+    }
+}
+
+bool Window::isFocused() const
+{
+    return m_window && glfwGetWindowAttrib(m_window, GLFW_FOCUSED);
+}
+
+void Window::requestAttention()
+{
+    if(m_window)
+    {
+        glfwRequestWindowAttention(m_window);
+    }
 }
 
 void Window::setUserPointer(void* ptr) const
