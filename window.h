@@ -13,12 +13,6 @@
 namespace glfwW
 {
 
-template<typename T = decltype (GLFW_TRUE)>
-T toGLFWBool(bool val)
-{
-    return val ? GLFW_TRUE : GLFW_FALSE;
-}
-
 enum class WindowHint
 {
     //Window related hints

@@ -20,6 +20,12 @@ struct Rect
     Vec2<T> size;
 };
 
+template<typename T = decltype (GLFW_TRUE)>
+T toGLFWBool(bool val)
+{
+    return val ? GLFW_TRUE : GLFW_FALSE;
+}
+
 }
 
 #endif
