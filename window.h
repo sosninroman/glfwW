@@ -13,6 +13,12 @@
 namespace glfwW
 {
 
+template<typename T = decltype (GLFW_TRUE)>
+T toGLFWBool(bool val)
+{
+    return val ? GLFW_TRUE : GLFW_FALSE;
+}
+
 enum class WindowHint
 {
     //Window related hints
@@ -65,12 +71,16 @@ enum class ClientAPI
     OPENGL_ES
 };
 
+ClientAPI toClientAPI(int value);
+
 enum class ContextCreationAPI
 {
     NATIVE_CONTEXT_API,
     EGL_CONTEXT_API,
     OSMESA_CONTEXT_API
 };
+
+ContextCreationAPI toContextCreationAPI(int value);
 
 enum class OpenGLProfile
 {
@@ -79,6 +89,8 @@ enum class OpenGLProfile
     OPENGL_CORE_PROFILE
 };
 
+OpenGLProfile toOpenGLProfile(int value);
+
 enum class ContextRobustness
 {
     NO_ROBUSTNESS,
@@ -86,12 +98,16 @@ enum class ContextRobustness
     LOSE_CONTEXT_ON_RESET
 };
 
+ContextRobustness toContextRobustness(int value);
+
 enum class ContextReleaseBehavior
 {
     ANY_RELEASE_BEHAVIOR,
     RELEASE_BEHAVIOR_FLUSH,
     RELEASE_BEHAVIOR_NONE
 };
+
+ContextReleaseBehavior toContextReleaseBehavior(int value);
 
 template<typename T, WindowHint hint>
 constexpr bool isAppropriateHintType()
@@ -243,6 +259,84 @@ void windowMinimizeCallback(GLFWwindow* window, int iconified);
 void windowMaximizeCallback(GLFWwindow* window, int maximized);
 void windowFocusCallback(GLFWwindow* window, int focused);
 
+enum class WindowAttribute {
+    // Window related attributes
+    FOCUSED,
+    ICONIFIED,
+    MAXIMIZED,
+    HOVERED,
+    VISIBLE,
+    RESIZABLE,
+    DECORATED,
+    AUTO_ICONIFY,
+    FLOATING,
+    TRANSPARENT_FRAMEBUFFER,
+    FOCUS_ON_SHOW,
+    // Context related attributes
+    CLIENT_API,
+    CONTEXT_CREATION_API,
+    CONTEXT_VERSION_MAJOR,
+    CONTEXT_VERSION_MINOR,
+    CONTEXT_REVISION,
+    OPENGL_FORWARD_COMPAT,
+    OPENGL_DEBUG_CONTEXT,
+    OPENGL_PROFILE,
+    CONTEXT_RELEASE_BEHAVIOR,
+    CONTEXT_NO_ERROR,
+    CONTEXT_ROBUSTNESS,
+};
+
+template<typename T, WindowAttribute attribute>
+constexpr bool isAppropriateWindowAttributeType()
+{
+    switch (attribute) {
+    case WindowAttribute::FOCUSED:
+    case WindowAttribute::ICONIFIED:
+    case WindowAttribute::MAXIMIZED:
+    case WindowAttribute::HOVERED:
+    case WindowAttribute::VISIBLE:
+    case WindowAttribute::RESIZABLE:
+    case WindowAttribute::DECORATED:
+    case WindowAttribute::AUTO_ICONIFY:
+    case WindowAttribute::FLOATING:
+    case WindowAttribute::TRANSPARENT_FRAMEBUFFER:
+    case WindowAttribute::FOCUS_ON_SHOW:
+    case WindowAttribute::OPENGL_FORWARD_COMPAT:
+    case WindowAttribute::OPENGL_DEBUG_CONTEXT:
+    case WindowAttribute::CONTEXT_NO_ERROR:
+    {
+        return std::is_same_v<T, bool>;
+    }
+    case WindowAttribute::CONTEXT_REVISION:
+    case WindowAttribute::CONTEXT_VERSION_MAJOR:
+    case WindowAttribute::CONTEXT_VERSION_MINOR:
+    {
+        return std::is_same_v<T, int>;
+    }
+    case WindowAttribute::CLIENT_API:
+    {
+        return std::is_same_v<T, ClientAPI>;
+    }
+    case WindowAttribute::CONTEXT_CREATION_API:
+    {
+        return std::is_same_v<T, ContextCreationAPI>;
+    }
+    case WindowAttribute::OPENGL_PROFILE:
+    {
+        return std::is_same_v<T, OpenGLProfile>;
+    }
+    case WindowAttribute::CONTEXT_RELEASE_BEHAVIOR:
+    {
+        return std::is_same_v<T, ContextReleaseBehavior>;
+    }
+    case WindowAttribute::CONTEXT_ROBUSTNESS:
+    {
+        return std::is_same_v<T, ContextRobustness>;
+    }
+    }
+    return false;
+}
+
 class Window
 {
     friend class GLFWlibrary;
@@ -336,12 +430,10 @@ public:
      */
     void setFocusHandler(FocusHandler h) const;
 
-    void setRefreshHandler(RefreshHandler h)
-    {
-        assert(m_window);
-        refreshHandlers[m_window] = h;
-        glfwSetWindowRefreshCallback(m_window, windowRefreshCallback);
-    }
+    /*!
+     * \brief Sets the window's context refresh callback. The callback function is called when the contents of the window needs to be refreshed.
+     */
+    void setRefreshHandler(RefreshHandler h) const;
 
     //WINDOW CLOSING
     /*!
@@ -523,28 +615,81 @@ public:
      * \brief Notifies the user of an event inside the window.
      */
     void requestAttention();
-    //-----------
+
+    // TRANSPARENCY
+    /*!
+     * \brief Returns true if the framebuffer of the window is transparent.
+     */
+    bool isFramebufferTransparent() const;
 
     /*!
-     * \brief Make window's OpenGL context current
+     * \brief Returns the opacity of the whole window (including any decorations).
      */
-    void activate() const
+    float getOpacity() const;
+
+    /*!
+     * \brief Changes the opaciity of the whole window.
+     */
+    void setOpacity(float value);
+
+    // ATTRIBUTES
+    template<WindowAttribute attribute>
+    auto getAttribute()
     {
-        if(m_window)
+        if constexpr(isAppropriateWindowAttributeType<bool, attribute>())
         {
-            glfwMakeContextCurrent(m_window);
+            return m_window && glfwGetWindowAttrib(m_window, glfwWindowAttributeValue(attribute)) == GLFW_TRUE;
+        }
+        if constexpr(isAppropriateWindowAttributeType<int, attribute>())
+        {
+            return m_window ? glfwGetWindowAttrib(m_window, glfwWindowAttributeValue(attribute)) : 0;
+        }
+        if constexpr(isAppropriateWindowAttributeType<ClientAPI, attribute>())
+        {
+            return toClientAPI(glfwGetWindowAttrib(m_window, glfwWindowAttributeValue(attribute)));
+        }
+        if constexpr(isAppropriateWindowAttributeType<ContextCreationAPI, attribute>())
+        {
+            return toContextCreationAPI(glfwGetWindowAttrib(m_window, glfwWindowAttributeValue(attribute)));
+        }
+        if constexpr(isAppropriateWindowAttributeType<OpenGLProfile, attribute>())
+        {
+            return toOpenGLProfile(glfwGetWindowAttrib(m_window, glfwWindowAttributeValue(attribute)));
+        }
+        if constexpr(isAppropriateWindowAttributeType<ContextReleaseBehavior, attribute>())
+        {
+            return toContextReleaseBehavior(glfwGetWindowAttrib(m_window, glfwWindowAttributeValue(attribute)));
+        }
+        if constexpr(isAppropriateWindowAttributeType<ContextRobustness, attribute>())
+        {
+            return toContextRobustness(glfwGetWindowAttrib(m_window, glfwWindowAttributeValue(attribute)));
         }
     }
 
-    void swapBuffers() const
-    {
-        if(m_window)
-        {
-            glfwSwapBuffers(m_window);
-        }
-    }
+    /*!
+     * \brief Changes GLFW_DECORATED attribute value for the window.
+     */
+    void setDecorated(bool val);
 
+    /*!
+     * \brief Changes GLFW_RESIZABLE attribute value for the window.
+     */
+    void setResizable(bool val);
 
+    /*!
+     * \brief Changes GLFW_FLOATING attribute value for the window.
+     */
+    void setFloating(bool val);
+
+    /*!
+     * \brief Changes GLFW_AUTO_ICONIFY attribute value for the window.
+     */
+    void setAutoMinimizable(bool val);
+
+    /*!
+     * \brief Changes GLFW_FOCUS_ON_SHOW attribute value for the window.
+     */
+    void setFocusOnShow(bool val);
 
     // USER POINTER
     void setUserPointer(void* ptr) const;
@@ -557,6 +702,25 @@ public:
     GLFWwindow* getHandler() const {return m_window;}
 
     bool ownHandler() const {return m_ownership == WindowOwnership::Owner;}
+
+    // BUFFER
+    /*!
+     * \brief Swaps the front and back buffers of the specified window.
+     */
+    void swapBuffers() const;
+
+    // CONTEXT
+    /*!
+     * \brief Make window's OpenGL context current
+     */
+    void activate() const
+    {
+        if(m_window)
+        {
+            glfwMakeContextCurrent(m_window);
+        }
+    }
+
 private:
     template<typename CallbacksContainerT, typename... Args>
     void tryInvokeCallback(const CallbacksContainerT& callbacksContainer, Args... args) const
@@ -568,55 +732,17 @@ private:
         }
     }
 
-    void onClose() const
-    {
-        tryInvokeCallback(closeHandlers);
-    }
-
-    void onSizeChanged(int width, int height) const
-    {
-        tryInvokeCallback(sizeHandlers, Vec2<int>{width, height});
-    }
-
-    void onFramebufferSizeChanged(int width, int height) const
-    {
-        tryInvokeCallback(framebufferSizeHandlers, Vec2<int>{width, height});
-    }
-
-    void onContentScaleChanged(float xscale, float yscale) const
-    {
-        tryInvokeCallback(constentScaleHandlers, Vec2<float>{xscale, yscale});
-    }
-
-    void onPositionChanged(int x, int y) const
-    {
-        tryInvokeCallback(positionHandlers, Vec2<int>{x, y});
-    }
-
-    void onRefresh() const
-    {
-        tryInvokeCallback(refreshHandlers);
-    }
-
-    void onMinimized() const
-    {
-        tryInvokeCallback(minimizeHandlers);
-    }
-
-    void onMaximized() const
-    {
-        tryInvokeCallback(maximizeHandlers);
-    }
-
-    void onRestored(RestoreMode mode) const
-    {
-        tryInvokeCallback(restoreHandlers, mode);
-    }
-
-    void onFocused(bool focused) const
-    {
-        tryInvokeCallback(focusHandlers, focused);
-    }
+    void onClose() const;
+    void onSizeChanged(int width, int height) const;
+    void onFramebufferSizeChanged(int width, int height) const;
+    void onContentScaleChanged(float xscale, float yscale) const;
+    void onPositionChanged(int x, int y) const;
+    void onRefresh() const;
+    void onMinimized() const;
+    void onMaximized() const;
+    void onRestored(RestoreMode mode) const;
+    void onFocused(bool focused) const;
+    int glfwWindowAttributeValue(WindowAttribute attribute);
 
     GLFWwindow* m_window = nullptr;
 

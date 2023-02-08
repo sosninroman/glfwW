@@ -5,6 +5,91 @@
 namespace glfwW
 {
 
+ClientAPI toClientAPI(int value)
+{
+    if(value == GLFW_NO_API)
+    {
+        return ClientAPI::NO_API;
+    }
+    else if(value == GLFW_OPENGL_API)
+    {
+        return ClientAPI::OPENGL;
+    }
+    else if(value == GLFW_OPENGL_ES_API)
+    {
+        return ClientAPI::OPENGL_ES;
+    }
+    return ClientAPI::NO_API;
+}
+
+ContextCreationAPI toContextCreationAPI(int value)
+{
+    if(value == GLFW_NATIVE_CONTEXT_API)
+    {
+        return ContextCreationAPI::NATIVE_CONTEXT_API;
+    }
+    else if(value == GLFW_EGL_CONTEXT_API)
+    {
+        return ContextCreationAPI::EGL_CONTEXT_API;
+    }
+    else if(value == GLFW_OSMESA_CONTEXT_API)
+    {
+        return ContextCreationAPI::OSMESA_CONTEXT_API;
+    }
+    return ContextCreationAPI::NATIVE_CONTEXT_API;
+}
+
+OpenGLProfile toOpenGLProfile(int value)
+{
+    if(value == GLFW_OPENGL_ANY_PROFILE)
+    {
+        return OpenGLProfile::OPENGL_ANY_PROFILE;
+    }
+    else if(value == GLFW_OPENGL_CORE_PROFILE)
+    {
+        return OpenGLProfile::OPENGL_CORE_PROFILE;
+    }
+    else if(value == GLFW_OPENGL_COMPAT_PROFILE)
+    {
+        return OpenGLProfile::OPENGL_COMPAT_PROFILE;
+    }
+    return OpenGLProfile::OPENGL_ANY_PROFILE;
+}
+
+ContextRobustness toContextRobustness(int value)
+{
+    if(value == GLFW_NO_ROBUSTNESS)
+    {
+        return ContextRobustness::NO_ROBUSTNESS;
+    }
+    else if(value == GLFW_NO_RESET_NOTIFICATION)
+    {
+        return ContextRobustness::NO_RESET_NOTIFICATION;
+    }
+    else if(value == GLFW_LOSE_CONTEXT_ON_RESET)
+    {
+        return ContextRobustness::LOSE_CONTEXT_ON_RESET;
+    }
+    return ContextRobustness::NO_ROBUSTNESS;
+}
+
+ContextReleaseBehavior toContextReleaseBehavior(int value)
+{
+    if(value == GLFW_ANY_RELEASE_BEHAVIOR)
+    {
+        return ContextReleaseBehavior::ANY_RELEASE_BEHAVIOR;
+    }
+    else if(value == GLFW_RELEASE_BEHAVIOR_FLUSH)
+    {
+        return ContextReleaseBehavior::RELEASE_BEHAVIOR_FLUSH;
+    }
+    else if(value == GLFW_RELEASE_BEHAVIOR_NONE)
+    {
+        return ContextReleaseBehavior::RELEASE_BEHAVIOR_NONE;
+    }
+    return ContextReleaseBehavior::ANY_RELEASE_BEHAVIOR;
+}
+
 void WindowCreationHints::clear()
 {
     m_boolHints.clear();
@@ -406,6 +491,13 @@ void Window::setFocusHandler(FocusHandler h) const
     glfwSetWindowFocusCallback(m_window, windowFocusCallback);
 }
 
+void Window::setRefreshHandler(RefreshHandler h) const
+{
+    assert(m_window);
+    refreshHandlers[m_window] = h;
+    glfwSetWindowRefreshCallback(m_window, windowRefreshCallback);
+}
+
 bool Window::shouldClose() const
 {
     return m_window && glfwWindowShouldClose(m_window);
@@ -652,6 +744,64 @@ void Window::requestAttention()
     }
 }
 
+bool Window::isFramebufferTransparent() const
+{
+    return m_window && glfwGetWindowAttrib(m_window, GLFW_TRANSPARENT_FRAMEBUFFER);
+}
+
+float Window::getOpacity() const
+{
+    return m_window ? glfwGetWindowOpacity(m_window) : 0;
+}
+
+void Window::setOpacity(float value)
+{
+    if(m_window)
+    {
+        glfwSetWindowOpacity(m_window, value);
+    }
+}
+
+void Window::setDecorated(bool val)
+{
+    if(m_window)
+    {
+        glfwSetWindowAttrib(m_window, GLFW_DECORATED, toGLFWBool(val));
+    }
+}
+
+void Window::setResizable(bool val)
+{
+    if(m_window)
+    {
+        glfwSetWindowAttrib(m_window, GLFW_RESIZABLE, toGLFWBool(val));
+    }
+}
+
+void Window::setFloating(bool val)
+{
+    if(m_window)
+    {
+        glfwSetWindowAttrib(m_window, GLFW_FLOATING, toGLFWBool(val));
+    }
+}
+
+void Window::setAutoMinimizable(bool val)
+{
+    if(m_window)
+    {
+        glfwSetWindowAttrib(m_window, GLFW_AUTO_ICONIFY, toGLFWBool(val));
+    }
+}
+
+void Window::setFocusOnShow(bool val)
+{
+    if(m_window)
+    {
+        glfwSetWindowAttrib(m_window, GLFW_FOCUS_ON_SHOW, toGLFWBool(val));
+    }
+}
+
 void Window::setUserPointer(void* ptr) const
 {
     if(!m_window)
@@ -664,6 +814,112 @@ void Window::setUserPointer(void* ptr) const
 void* Window::getUserPointer() const
 {
     return glfwGetWindowUserPointer(m_window);
+}
+
+void Window::swapBuffers() const
+{
+    if(m_window)
+    {
+        glfwSwapBuffers(m_window);
+    }
+}
+
+void Window::onClose() const
+{
+    tryInvokeCallback(closeHandlers);
+}
+
+void Window::onSizeChanged(int width, int height) const
+{
+    tryInvokeCallback(sizeHandlers, Vec2<int>{width, height});
+}
+
+void Window::onFramebufferSizeChanged(int width, int height) const
+{
+    tryInvokeCallback(framebufferSizeHandlers, Vec2<int>{width, height});
+}
+
+void Window::onContentScaleChanged(float xscale, float yscale) const
+{
+    tryInvokeCallback(constentScaleHandlers, Vec2<float>{xscale, yscale});
+}
+
+void Window::onPositionChanged(int x, int y) const
+{
+    tryInvokeCallback(positionHandlers, Vec2<int>{x, y});
+}
+
+void Window::onRefresh() const
+{
+    tryInvokeCallback(refreshHandlers);
+}
+
+void Window::onMinimized() const
+{
+    tryInvokeCallback(minimizeHandlers);
+}
+
+void Window::onMaximized() const
+{
+    tryInvokeCallback(maximizeHandlers);
+}
+
+void Window::onRestored(RestoreMode mode) const
+{
+    tryInvokeCallback(restoreHandlers, mode);
+}
+
+void Window::onFocused(bool focused) const
+{
+    tryInvokeCallback(focusHandlers, focused);
+}
+
+int Window::glfwWindowAttributeValue(WindowAttribute attribute)
+{
+    switch(attribute)
+    {
+    case WindowAttribute::RESIZABLE:
+        return GLFW_RESIZABLE;
+    case WindowAttribute::VISIBLE:
+        return GLFW_VISIBLE;
+    case WindowAttribute::DECORATED:
+        return GLFW_DECORATED;
+    case WindowAttribute::FOCUSED:
+        return GLFW_FOCUSED;
+    case WindowAttribute::AUTO_ICONIFY:
+        return GLFW_AUTO_ICONIFY;
+    case WindowAttribute::FLOATING:
+        return GLFW_FLOATING;
+    case WindowAttribute::MAXIMIZED:
+        return GLFW_MAXIMIZED;
+    case WindowAttribute::TRANSPARENT_FRAMEBUFFER:
+        return GLFW_TRANSPARENT_FRAMEBUFFER;
+    case WindowAttribute::FOCUS_ON_SHOW:
+        return GLFW_FOCUS_ON_SHOW;
+    case WindowAttribute::CLIENT_API:
+        return GLFW_CLIENT_API;
+    case WindowAttribute::CONTEXT_CREATION_API:
+        return GLFW_CONTEXT_CREATION_API;
+    case WindowAttribute::CONTEXT_VERSION_MAJOR:
+        return GLFW_CONTEXT_VERSION_MAJOR;
+    case WindowAttribute::CONTEXT_VERSION_MINOR:
+        return GLFW_CONTEXT_VERSION_MINOR;
+    case WindowAttribute::OPENGL_FORWARD_COMPAT:
+        return GLFW_OPENGL_FORWARD_COMPAT;
+    case WindowAttribute::OPENGL_DEBUG_CONTEXT:
+        return GLFW_OPENGL_DEBUG_CONTEXT;
+    case WindowAttribute::OPENGL_PROFILE:
+        return GLFW_OPENGL_PROFILE;
+    case WindowAttribute::CONTEXT_ROBUSTNESS:
+        return GLFW_CONTEXT_ROBUSTNESS;
+    case WindowAttribute::CONTEXT_RELEASE_BEHAVIOR:
+        return GLFW_CONTEXT_RELEASE_BEHAVIOR;
+    case WindowAttribute::CONTEXT_NO_ERROR:
+        return GLFW_CONTEXT_NO_ERROR;
+    default:
+        assert(false);
+    }
+    return -1;
 }
 
 }

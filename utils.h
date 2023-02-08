@@ -8,12 +8,6 @@
 namespace glfwW
 {
 
-template<typename T = decltype (GLFW_TRUE)>
-T toGLFWBool(bool val)
-{
-    return val ? GLFW_TRUE : GLFW_FALSE;
-}
-
 std::vector<Monitor> getMonitors();
 Monitor getContainingMonitor(const Window& window);
 WindowCreationHints currentWindowCreationHints();
