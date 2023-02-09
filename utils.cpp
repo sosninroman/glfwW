@@ -46,13 +46,4 @@ Monitor getContainingMonitor(const Window& window)
     return result;
 }
 
-WindowCreationHints currentWindowCreationHints()
-{
-    WindowCreationHints hints;
-
-
-
-    return hints;
-}
-
 }

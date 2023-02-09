@@ -9,6 +9,7 @@
 #include <functional>
 #include <optional>
 #include <vector>
+#include "events.h"
 
 namespace glfwW
 {
@@ -252,6 +253,7 @@ void windowRefreshCallback(GLFWwindow* window);
 void windowMinimizeCallback(GLFWwindow* window, int iconified);
 void windowMaximizeCallback(GLFWwindow* window, int maximized);
 void windowFocusCallback(GLFWwindow* window, int focused);
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 enum class WindowAttribute {
     // Window related attributes
@@ -344,6 +346,7 @@ class Window
     friend void windowMinimizeCallback(GLFWwindow* window, int iconified);
     friend void windowMaximizeCallback(GLFWwindow* window, int maximized);
     friend void windowFocusCallback(GLFWwindow* window, int focused);
+    friend void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 public:
     typedef void(* CloseHandler) (const Window&);
     typedef void(* SizeHandler) (const Window&, Vec2<int>);
@@ -359,6 +362,7 @@ public:
     };
     typedef void(* RestoreHandler) (const Window&, RestoreMode);
     typedef void(* FocusHandler) (const Window&, bool);
+    typedef void(* KeyHandler) (const Window&, KeyEvent);
 
     enum class WindowOwnership
     {
@@ -428,6 +432,8 @@ public:
      * \brief Sets the window's context refresh callback. The callback function is called when the contents of the window needs to be refreshed.
      */
     void setRefreshHandler(RefreshHandler h) const;
+
+    void setKeyHandler(KeyHandler h) const;
 
     //WINDOW CLOSING
     /*!
@@ -705,7 +711,7 @@ public:
 
     // CONTEXT
     /*!
-     * \brief Make window's OpenGL context current
+     * \brief Make window's OpenGL context current for a thread.
      */
     void activate() const
     {
@@ -714,6 +720,16 @@ public:
             glfwMakeContextCurrent(m_window);
         }
     }
+
+    // KEY INPUT
+
+    KeyAction getKeyAction(Key key) const;
+
+    bool getStickyKeysMode() const;
+    void setStickyKeys(bool val);
+
+    bool getLockModifiersAvailable() const;
+    void setLockModifiersAvailable(bool val);
 
 private:
     template<typename CallbacksContainerT, typename... Args>
@@ -736,6 +752,7 @@ private:
     void onMaximized() const;
     void onRestored(RestoreMode mode) const;
     void onFocused(bool focused) const;
+    void onKeyEvent(KeyEvent event) const;
     int glfwWindowAttributeValue(WindowAttribute attribute);
 
     GLFWwindow* m_window = nullptr;
@@ -750,6 +767,7 @@ private:
     static std::unordered_map<GLFWwindow*, MaximizeHandler> maximizeHandlers;
     static std::unordered_map<GLFWwindow*, RestoreHandler> restoreHandlers;
     static std::unordered_map<GLFWwindow*, FocusHandler> focusHandlers;
+    static std::unordered_map<GLFWwindow*, KeyHandler> keyHandlers;
 
     WindowOwnership m_ownership = WindowOwnership::None;
 };

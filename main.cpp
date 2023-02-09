@@ -57,12 +57,22 @@ int main()
         std::cout << "Failed to create GLFW window" << std::endl;
         return -1;
     }
+
+    window.setKeyHandler([](const glfwW::Window& window, glfwW::KeyEvent event){
+        std::cerr << event.scancode << "\n";
+        if(event.action == glfwW::KeyAction::PRESS && event.key == glfwW::Key::KEY_ESCAPE)
+            {
+            window.setShouldClose(true);
+        }
+    });
+
     window.activate();
     window.setFramebufferSizeCallback(framebufferSizeCallback);
 
     while (!window.shouldClose())
     {
-        processInput(window);
+        lib.pollEvents();
+        //processInput(window);
 
         //render here
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);

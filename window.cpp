@@ -339,6 +339,7 @@ std::unordered_map<GLFWwindow*, Window::MinimizeHandler> Window::minimizeHandler
 std::unordered_map<GLFWwindow*, Window::MaximizeHandler> Window::maximizeHandlers;
 std::unordered_map<GLFWwindow*, Window::RestoreHandler> Window::restoreHandlers;
 std::unordered_map<GLFWwindow*, Window::FocusHandler> Window::focusHandlers;
+std::unordered_map<GLFWwindow*, Window::KeyHandler> Window::keyHandlers;
 
 void windowCloseCallback(GLFWwindow* window)
 {
@@ -399,6 +400,16 @@ void windowMaximizeCallback(GLFWwindow* window, int maximized)
 void windowFocusCallback(GLFWwindow* window, int focused)
 {
     Window(window, Window::WindowOwnership::None).onFocused(focused);
+}
+
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    KeyEvent event;
+    event.key = fromGlfwKey(key);
+    event.action = fromGlfwKeyAction(action);
+    event.scancode = scancode;
+    event.modifierBits = mods;
+    Window(window, Window::WindowOwnership::None).onKeyEvent(event);
 }
 
 Window::Window(GLFWwindow* window):
@@ -496,6 +507,13 @@ void Window::setRefreshHandler(RefreshHandler h) const
     assert(m_window);
     refreshHandlers[m_window] = h;
     glfwSetWindowRefreshCallback(m_window, windowRefreshCallback);
+}
+
+void Window::setKeyHandler(KeyHandler h) const
+{
+    assert(m_window);
+    keyHandlers[m_window] = h;
+    glfwSetKeyCallback(m_window, keyCallback);
 }
 
 bool Window::shouldClose() const
@@ -824,6 +842,37 @@ void Window::swapBuffers() const
     }
 }
 
+KeyAction Window::getKeyAction(Key key) const
+{
+    return fromGlfwKeyAction(glfwGetKey(m_window, toGlfwKey(key)));
+}
+
+bool Window::getStickyKeysMode() const
+{
+    return m_window ? glfwGetInputMode(m_window, GLFW_STICKY_KEYS) == GLFW_TRUE : false;
+}
+
+void Window::setStickyKeys(bool val)
+{
+    if(m_window)
+    {
+        glfwSetInputMode(m_window, GLFW_STICKY_KEYS, toGLFWBool(val));
+    }
+}
+
+bool Window::getLockModifiersAvailable() const
+{
+    return m_window ? glfwGetInputMode(m_window, GLFW_LOCK_KEY_MODS) == GLFW_TRUE : false;
+}
+
+void Window::setLockModifiersAvailable(bool val)
+{
+    if(m_window)
+    {
+        glfwSetInputMode(m_window, GLFW_LOCK_KEY_MODS, toGLFWBool(val));
+    }
+}
+
 void Window::onClose() const
 {
     tryInvokeCallback(closeHandlers);
@@ -872,6 +921,11 @@ void Window::onRestored(RestoreMode mode) const
 void Window::onFocused(bool focused) const
 {
     tryInvokeCallback(focusHandlers, focused);
+}
+
+void Window::onKeyEvent(KeyEvent event) const
+{
+    tryInvokeCallback(keyHandlers, event);
 }
 
 int Window::glfwWindowAttributeValue(WindowAttribute attribute)

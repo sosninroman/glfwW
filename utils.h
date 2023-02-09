@@ -10,7 +10,6 @@ namespace glfwW
 
 std::vector<Monitor> getMonitors();
 Monitor getContainingMonitor(const Window& window);
-WindowCreationHints currentWindowCreationHints();
 
 }
 

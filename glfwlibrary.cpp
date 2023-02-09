@@ -86,6 +86,26 @@ void GLFWlibrary::resetWindowCreationHintsToDefault()
     WindowCreationHints::resetToDefault();
 }
 
+void GLFWlibrary::pollEvents() const
+{
+    glfwPollEvents();
+}
+
+void GLFWlibrary::waitEvents() const
+{
+    glfwWaitEvents();
+}
+
+void GLFWlibrary::waitEventsTimeout(double time) const
+{
+    glfwWaitEventsTimeout(time);
+}
+
+int GLFWlibrary::getKeyScancode(Key key) const
+{
+    return glfwGetKeyScancode(toGlfwKey(key));
+}
+
 void GLFWlibrary::onError(int errorCode, const char *description) const
 {
     if(m_errorHandler)

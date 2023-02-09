@@ -163,10 +163,26 @@ public:
     void resetWindowCreationHintsToDefault();
 
     //EVENTS
-    void pollEvents() const
-    {
-        glfwPollEvents();
-    }
+    /*!
+     * \brief Processes events from the event queue immediately. Processing events will cause the window and input callbacks associated with those events to be called.
+     */
+    void pollEvents() const;
+
+    /*!
+     * \brief Puts the calling thread to sleep until at least one event is available in the event queue.
+     * Once one or more events are available, the events in the queue are processed and the function then returns immediately.
+     */
+    void waitEvents() const;
+
+    /*!
+     * \brief Puts the calling thread to sleep until at least one event is available in the event queue, or until the specified timeout is reached.
+     */
+    void waitEventsTimeout(double time) const;
+
+    /*!
+     * \brief Returns scancode for the key
+     */
+    int getKeyScancode(Key key) const;
 
 private:
     friend void errorCallback(int errorCode, const char *description);

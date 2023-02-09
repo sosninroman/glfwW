@@ -25,7 +25,6 @@ T toGLFWBool(bool val)
 {
     return val ? GLFW_TRUE : GLFW_FALSE;
 }
-
 }
 
 #endif
