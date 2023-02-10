@@ -66,6 +66,10 @@ int main()
         }
     });
 
+    window.setTextHandler([](const glfwW::Window&, unsigned int codepoint){
+        std::cerr << (char)codepoint << "\n";
+    });
+
     window.activate();
     window.setFramebufferSizeCallback(framebufferSizeCallback);
 

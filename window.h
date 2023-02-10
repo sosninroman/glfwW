@@ -254,6 +254,7 @@ void windowMinimizeCallback(GLFWwindow* window, int iconified);
 void windowMaximizeCallback(GLFWwindow* window, int maximized);
 void windowFocusCallback(GLFWwindow* window, int focused);
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void textCallback(GLFWwindow* window, unsigned int codepoint);
 
 enum class WindowAttribute {
     // Window related attributes
@@ -347,6 +348,7 @@ class Window
     friend void windowMaximizeCallback(GLFWwindow* window, int maximized);
     friend void windowFocusCallback(GLFWwindow* window, int focused);
     friend void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    friend void textCallback(GLFWwindow* window, unsigned int codepoint);
 public:
     typedef void(* CloseHandler) (const Window&);
     typedef void(* SizeHandler) (const Window&, Vec2<int>);
@@ -363,6 +365,7 @@ public:
     typedef void(* RestoreHandler) (const Window&, RestoreMode);
     typedef void(* FocusHandler) (const Window&, bool);
     typedef void(* KeyHandler) (const Window&, KeyEvent);
+    typedef void(* TextHandler) (const Window&, unsigned int);
 
     enum class WindowOwnership
     {
@@ -433,7 +436,15 @@ public:
      */
     void setRefreshHandler(RefreshHandler h) const;
 
+    /*!
+     * \brief Sets a key event callback.
+     */
     void setKeyHandler(KeyHandler h) const;
+
+    /*!
+     * \brief Sets a callback for text input.
+     */
+    void setTextHandler(TextHandler h) const;
 
     //WINDOW CLOSING
     /*!
@@ -722,13 +733,31 @@ public:
     }
 
     // KEY INPUT
-
+    /*!
+     * \brief Returns the last reported state for the key.
+     */
     KeyAction getKeyAction(Key key) const;
 
+    /*!
+     * \brief Returns true if sticky keys mode on.
+     * When sticky keys mode is enabled, the pollable state of a key will remain PRESS until the state of that key is polled.
+     * Once it has been polled, if a key release event had been processed in the meantime, the state will reset to RELEASE, otherwise it will remain PRESS.
+     */
     bool getStickyKeysMode() const;
+
+    /*!
+     * \brief Sets sticky keys mode.
+     */
     void setStickyKeys(bool val);
 
+    /*!
+     * \brief Returns true if Caps Lock and Num Lock modifiers bits are setted inside key event.
+     */
     bool getLockModifiersAvailable() const;
+
+    /*!
+     * \brief Sets lock modifiers availability.
+     */
     void setLockModifiersAvailable(bool val);
 
 private:
@@ -753,6 +782,7 @@ private:
     void onRestored(RestoreMode mode) const;
     void onFocused(bool focused) const;
     void onKeyEvent(KeyEvent event) const;
+    void onText(unsigned int codepoint) const;
     int glfwWindowAttributeValue(WindowAttribute attribute);
 
     GLFWwindow* m_window = nullptr;
@@ -768,6 +798,7 @@ private:
     static std::unordered_map<GLFWwindow*, RestoreHandler> restoreHandlers;
     static std::unordered_map<GLFWwindow*, FocusHandler> focusHandlers;
     static std::unordered_map<GLFWwindow*, KeyHandler> keyHandlers;
+    static std::unordered_map<GLFWwindow*, TextHandler> textHandlers;
 
     WindowOwnership m_ownership = WindowOwnership::None;
 };

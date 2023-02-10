@@ -106,6 +106,16 @@ int GLFWlibrary::getKeyScancode(Key key) const
     return glfwGetKeyScancode(toGlfwKey(key));
 }
 
+const char* GLFWlibrary::getKeyName(Key key) const
+{
+    return glfwGetKeyName(toGlfwKey(key), -1);
+}
+
+const char* GLFWlibrary::getKeyName(int scancode)
+{
+    return glfwGetKeyName(GLFW_KEY_UNKNOWN, scancode);
+}
+
 void GLFWlibrary::onError(int errorCode, const char *description) const
 {
     if(m_errorHandler)

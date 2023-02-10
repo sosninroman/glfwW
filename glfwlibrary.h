@@ -184,6 +184,8 @@ public:
      */
     int getKeyScancode(Key key) const;
 
+    const char* getKeyName(Key key) const;
+    const char* getKeyName(int scancode);
 private:
     friend void errorCallback(int errorCode, const char *description);
 

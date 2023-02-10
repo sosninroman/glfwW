@@ -340,6 +340,7 @@ std::unordered_map<GLFWwindow*, Window::MaximizeHandler> Window::maximizeHandler
 std::unordered_map<GLFWwindow*, Window::RestoreHandler> Window::restoreHandlers;
 std::unordered_map<GLFWwindow*, Window::FocusHandler> Window::focusHandlers;
 std::unordered_map<GLFWwindow*, Window::KeyHandler> Window::keyHandlers;
+std::unordered_map<GLFWwindow*, Window::TextHandler> Window::textHandlers;
 
 void windowCloseCallback(GLFWwindow* window)
 {
@@ -410,6 +411,11 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
     event.scancode = scancode;
     event.modifierBits = mods;
     Window(window, Window::WindowOwnership::None).onKeyEvent(event);
+}
+
+void textCallback(GLFWwindow* window, unsigned int codepoint)
+{
+    Window(window, Window::WindowOwnership::None).onText(codepoint);
 }
 
 Window::Window(GLFWwindow* window):
@@ -514,6 +520,13 @@ void Window::setKeyHandler(KeyHandler h) const
     assert(m_window);
     keyHandlers[m_window] = h;
     glfwSetKeyCallback(m_window, keyCallback);
+}
+
+void Window::setTextHandler(TextHandler h) const
+{
+    assert(m_window);
+    textHandlers[m_window] = h;
+    glfwSetCharCallback(m_window, textCallback);
 }
 
 bool Window::shouldClose() const
@@ -926,6 +939,11 @@ void Window::onFocused(bool focused) const
 void Window::onKeyEvent(KeyEvent event) const
 {
     tryInvokeCallback(keyHandlers, event);
+}
+
+void Window::onText(unsigned int codepoint) const
+{
+    tryInvokeCallback(textHandlers, codepoint);
 }
 
 int Window::glfwWindowAttributeValue(WindowAttribute attribute)
