@@ -211,6 +211,7 @@ struct MouseButtonEvent
     Action action = Action::PRESS; // PRESS or RELEASE
     int modifierBits = -1;
 };
+
 }
 
 #endif

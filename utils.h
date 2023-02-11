@@ -9,8 +9,6 @@ namespace glfwW
 {
 
 bool fromGLFWBool(int val);
-std::vector<Monitor> getMonitors();
-Monitor getContainingMonitor(const Window& window);
 
 }
 

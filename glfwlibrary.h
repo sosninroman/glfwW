@@ -31,7 +31,22 @@ struct Error
     std::string description;
 };
 
+enum class MonitorEventType
+{
+    CONNECTED,
+    DISCONNECTED
+};
+
+MonitorEventType fromGlfwMonitorEventType(int type);
+
+struct MonitorEvent
+{
+    Monitor monitor;
+    MonitorEventType type = MonitorEventType::CONNECTED;
+};
+
 void errorCallback(int errorCode, const char *description);
+void monitorCallback(GLFWmonitor* monitor, int event);
 
 /*!
  * \brief The GLFW library wrapper class
@@ -40,7 +55,7 @@ class GLFWlibrary
 {
 public:
     typedef void(* ErrorHandler) (const Error&);
-
+    typedef void(* MonitorHandler) (const MonitorEvent&);
 
     struct InitHints
     {
@@ -90,10 +105,7 @@ public:
     }
 
     //ERRORS
-    void setErrorCallback(ErrorHandler* handler)
-    {
-        m_errorHandler = handler;
-    }
+    void setErrorCallback(ErrorHandler* handler);
 
     Error readLastError() const
     {
@@ -125,6 +137,16 @@ public:
      * \return
      */
     std::vector<Monitor> getMonitors() const;
+
+    /*!
+     * \brief Returns current monitor for the window.
+     */
+    Monitor getContainingMonitor(const Window& window);
+
+    /*!
+     * \brief Sets monitor handler callback. Callback is invoked if monitor was connected or disconnected.
+     */
+    void setMonitorHandler(MonitorHandler* h);
 
     //WINDOWS
     /*!
@@ -192,6 +214,7 @@ public:
     bool isRawMouseMotionSupported() const;
 private:
     friend void errorCallback(int errorCode, const char *description);
+    friend void monitorCallback(GLFWmonitor* monitor, int event);
 
     GLFWlibrary() = default;
 
@@ -201,10 +224,12 @@ private:
     }
 
     void onError(int errorCode, const char *description) const;
+    void onMonitorEvent(GLFWmonitor* monitor, int event) const;
 
 private:
     bool m_initialized = false;
     ErrorHandler* m_errorHandler = nullptr;
+    MonitorHandler* m_monitorHandler = nullptr;
     WindowCreationHints m_currentHints;
 };
 

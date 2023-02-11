@@ -598,6 +598,11 @@ public:
      */
     void toggleFullscreen(const Monitor& monitor, Vec2<int> size, int refreshRate) const;
 
+    /*!
+     * \brief Returns a monitor, that contains current window.
+     */
+    Monitor getContaininigMonitor() const;
+
     //MINIMAZE \ MAXIMAZE \ VISIBILITY
 
     /*!

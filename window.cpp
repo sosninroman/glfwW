@@ -755,7 +755,7 @@ void Window::toggleFullscreen()
     {
         return;
     }
-    const auto monitor = getContainingMonitor(*this);
+    const auto monitor = GLFWlibrary::instance().getContainingMonitor(*this);
     const auto mode = monitor.getVideoMode();
     toggleFullscreen(monitor, {mode.width, mode.height}, mode.refreshRate);
 }
@@ -763,6 +763,11 @@ void Window::toggleFullscreen()
 void Window::toggleFullscreen(const Monitor& monitor, Vec2<int> size, int refreshRate) const
 {
     glfwSetWindowMonitor(m_window, monitor.getHandler(), 0, 0, size.x, size.y, refreshRate);
+}
+
+Monitor Window::getContaininigMonitor() const
+{
+    return GLFWlibrary::instance().getContainingMonitor(*this);
 }
 
 void Window::minimize()

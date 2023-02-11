@@ -60,77 +60,57 @@ class Monitor
 public:
     Monitor(GLFWmonitor* descriptor = nullptr): m_monitor(descriptor){}
 
-    VideoMode getVideoMode() const
-    {
-        return m_monitor ? VideoMode(*glfwGetVideoMode(m_monitor)) : VideoMode();
-    }
+    /*!
+     * \brief Returns current video mode.
+     */
+    VideoMode getVideoMode() const;
 
-    std::vector<VideoMode> getVideoModes() const
-    {
-        std::vector<VideoMode> result;
-        int count = 0;
+    /*!
+     * \brief Returns available video modes for the monitor.
+     */
+    std::vector<VideoMode> getVideoModes() const;
 
-        if(m_monitor)
-        {
-            const GLFWvidmode* modes = glfwGetVideoModes(m_monitor, &count);
-            for(int i = 0; i < count; ++i)
-            {
-                result.push_back(VideoMode(modes[i]));
-            }
-        }
+    /*!
+     * \brief Returns the physical size of a monitor in millimetres.
+     * ! This has no relation to its current resolution, i.e. the width and height of its current video mode.
+     */
+    Vec2<int> getPhysicalSize() const;
 
-        return result;
-    }
+    /*!
+     * \brief The content scale is the ratio between the current DPI and the platform's default DPI.
+     */
+    Vec2<float> getContentScale() const;
 
-    Vec2<int> getPhysicalSize() const
-    {
-        Vec2<int> result;
-        if(m_monitor)
-        {
-            glfwGetMonitorPhysicalSize(m_monitor, &result.x, &result.y);
-        }
-        return result;
-    }
+    /*!
+     * \brief Returns the position of the monitor on the virtual desktop (in screen coordinates).
+     */
+    Vec2<int> getPosition() const;
 
-    Vec2<float> getContentScale() const
-    {
-        Vec2<float> result;
-        if(m_monitor)
-        {
-            glfwGetMonitorContentScale(m_monitor, &result.x, &result.y);
-        }
-        return result;
-    }
+    /*!
+     * \brief Returns the area of a monitorwhich is not occupied by global task bars or menu bars (in screen coordinates);
+     */
+    Rect<int> getWorkArea() const;
 
-    Vec2<int> getPosition() const
-    {
-        Vec2<int> result;
-        if(m_monitor)
-        {
-            glfwGetMonitorPos(m_monitor, &result.x, &result.y);
-        }
-        return result;
-    }
+    /*!
+     * \brief Returns a human-readable, UTF-8 encoded name of the monitor.
+     */
+    std::string getName() const;
 
-    Rect<int> getWorkArea() const
-    {
-        Rect<int> result;
-        if(m_monitor)
-        {
-            glfwGetMonitorWorkarea(m_monitor, &result.position.x, &result.position.y, &result.size.x, &result.size.y);
-        }
-        return result;
-    }
+    /*!
+     * \brief Sets user pointer.
+     */
+    void setUserPointer(void* pointer);
 
-    std::string getName() const
-    {
-        return m_monitor ? std::string(glfwGetMonitorName(m_monitor)) : std::string();
-    }
+    /*!
+     * \brief Returns a pointer, assosiated with this monitor.
+     */
+    void* getUserPointer() const;
 
     GLFWmonitor* getHandler() const {return m_monitor;}
 
     bool isValid() const {return m_monitor;}
 
+    //TODO gamma ramp
 private:
     GLFWmonitor* m_monitor = nullptr;
 };

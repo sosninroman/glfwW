@@ -84,8 +84,6 @@ int main()
             default:
                 std::cerr << "pressed mouse button" << "\n";
             }
-
-
         }
 
     });

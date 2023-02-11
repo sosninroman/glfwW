@@ -4,9 +4,27 @@
 namespace glfwW
 {
 
+MonitorEventType fromGlfwMonitorEventType(int type)
+{
+    if(type == GLFW_CONNECTED)
+    {
+        return MonitorEventType::CONNECTED;
+    }
+    else if(type == GLFW_DISCONNECTED)
+    {
+        return MonitorEventType::DISCONNECTED;
+    }
+    return MonitorEventType::CONNECTED;
+}
+
 void errorCallback(int errorCode, const char *description)
 {
     GLFWlibrary::instance().onError(errorCode, description);
+}
+
+void monitorCallback(GLFWmonitor* monitor, int event)
+{
+    GLFWlibrary::instance().onMonitorEvent(monitor, event);
 }
 
 Error GLFWlibrary::init(InitHints hints)
@@ -27,6 +45,11 @@ Error GLFWlibrary::init(InitHints hints)
     return Error();
 }
 
+void GLFWlibrary::setErrorCallback(ErrorHandler* handler)
+{
+    m_errorHandler = handler;
+}
+
 Monitor GLFWlibrary::getPrimaryMonitor() const
 {
     return Monitor(glfwGetPrimaryMonitor());
@@ -36,12 +59,46 @@ std::vector<Monitor> GLFWlibrary::getMonitors() const
 {
     int count = 0;
     std::vector<Monitor> result;
-    auto* glfwMonitors = glfwGetMonitors(&count);
+    GLFWmonitor** glfwMonitors = glfwGetMonitors(&count);
     for(int i = 0; i < count; ++i)
     {
-        result.push_back(Monitor(glfwMonitors[i]));
+        result.emplace_back(glfwMonitors[i]);
     }
     return result;
+}
+
+Monitor GLFWlibrary::getContainingMonitor(const Window& window)
+{
+    const auto monitors = getMonitors();
+
+    const auto windowPos = window.getPosition();
+    const auto windowSize = window.getSize();
+
+    int bestOverlap = 0;
+    Monitor result;
+
+    for (const auto& monitor : monitors)
+    {
+        const auto mode = monitor.getVideoMode();
+        const auto monitorPos = monitor.getPosition();
+        const Vec2<int> monitorSize = {mode.width, mode.height};
+
+        const auto overlap =
+            std::max(0, std::min(windowPos.x + windowSize.x, monitorPos.x + monitorSize.x) - std::max(windowPos.x, monitorPos.x)) *
+            std::max(0, std::min(windowPos.y + windowSize.y, monitorPos.y + monitorSize.y) - std::max(windowPos.y, monitorPos.y));
+
+        if (bestOverlap < overlap) {
+            bestOverlap = overlap;
+            result = monitor;
+        }
+    }
+
+    return result;
+}
+
+void GLFWlibrary::setMonitorHandler(MonitorHandler* h)
+{
+    m_monitorHandler = h;
 }
 
 Window GLFWlibrary::createWindow(const Monitor& monitor, const std::string& title)
@@ -129,6 +186,17 @@ void GLFWlibrary::onError(int errorCode, const char *description) const
         error.code = static_cast<ErrorCode>(errorCode);
         error.description.assign(description);
         std::invoke(*m_errorHandler, error);
+    }
+}
+
+void GLFWlibrary::onMonitorEvent(GLFWmonitor *monitor, int event) const
+{
+    if(m_monitorHandler)
+    {
+        MonitorEvent monitorEvent;
+        monitorEvent.monitor = Monitor(monitor);
+        monitorEvent.type = fromGlfwMonitorEventType(event);
+        std::invoke(*m_monitorHandler, monitorEvent);
     }
 }
 
