@@ -341,6 +341,10 @@ std::unordered_map<GLFWwindow*, Window::RestoreHandler> Window::restoreHandlers;
 std::unordered_map<GLFWwindow*, Window::FocusHandler> Window::focusHandlers;
 std::unordered_map<GLFWwindow*, Window::KeyHandler> Window::keyHandlers;
 std::unordered_map<GLFWwindow*, Window::TextHandler> Window::textHandlers;
+std::unordered_map<GLFWwindow*, Window::CursorPositionChangesHandler> Window::cursorPositionChangeHandlers;
+std::unordered_map<GLFWwindow*, Window::CursorEnterHandler> Window::cursorEnterHandlers;
+std::unordered_map<GLFWwindow*, Window::MouseClickHandler> Window::mouseClickHandlers;
+std::unordered_map<GLFWwindow*, Window::ScrollHandler> Window::scrollHandlers;
 
 void windowCloseCallback(GLFWwindow* window)
 {
@@ -407,7 +411,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 {
     KeyEvent event;
     event.key = fromGlfwKey(key);
-    event.action = fromGlfwKeyAction(action);
+    event.action = fromGlfwAction(action);
     event.scancode = scancode;
     event.modifierBits = mods;
     Window(window, Window::WindowOwnership::None).onKeyEvent(event);
@@ -416,6 +420,30 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 void textCallback(GLFWwindow* window, unsigned int codepoint)
 {
     Window(window, Window::WindowOwnership::None).onText(codepoint);
+}
+
+void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos)
+{
+    Window(window, Window::WindowOwnership::None).onCursorPositionChanged(Vec2<double>{xpos, ypos});
+}
+
+void cursorEnterCallback(GLFWwindow* window, int entered)
+{
+    Window(window, Window::WindowOwnership::None).onCursorEntered(entered == GLFW_TRUE);
+}
+
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+{
+    MouseButtonEvent event;
+    event.button = fromGlfwMouseButton(button);
+    event.action = fromGlfwAction(action);
+    event.modifierBits = mods;
+    Window(window, Window::WindowOwnership::None).onMouseButton(event);
+}
+
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    Window(window, Window::WindowOwnership::None).onScroll({xoffset, yoffset});
 }
 
 Window::Window(GLFWwindow* window):
@@ -439,6 +467,16 @@ Window::~Window()
         framebufferSizeHandlers.erase(m_window);
         positionHandlers.erase(m_window);
         refreshHandlers.erase(m_window);
+        constentScaleHandlers.erase(m_window);
+        minimizeHandlers.erase(m_window);
+        maximizeHandlers.erase(m_window);
+        restoreHandlers.erase(m_window);
+        focusHandlers.erase(m_window);
+        keyHandlers.erase(m_window);
+        textHandlers.erase(m_window);
+        cursorPositionChangeHandlers.erase(m_window);
+        cursorEnterHandlers.erase(m_window);
+        mouseClickHandlers.erase(m_window);
 
         glfwDestroyWindow(m_window);
     }
@@ -527,6 +565,34 @@ void Window::setTextHandler(TextHandler h) const
     assert(m_window);
     textHandlers[m_window] = h;
     glfwSetCharCallback(m_window, textCallback);
+}
+
+void Window::setCursorPositionChangesHandler(CursorPositionChangesHandler h) const
+{
+    assert(m_window);
+    cursorPositionChangeHandlers[m_window] = h;
+    glfwSetCursorPosCallback(m_window, cursorPositionCallback);
+}
+
+void Window::setCursorEnterHandler(CursorEnterHandler h) const
+{
+    assert(m_window);
+    cursorEnterHandlers[m_window] = h;
+    glfwSetCursorEnterCallback(m_window, cursorEnterCallback);
+}
+
+void Window::setMouseClickHandler(MouseClickHandler h) const
+{
+    assert(m_window);
+    mouseClickHandlers[m_window] = h;
+    glfwSetMouseButtonCallback(m_window, mouseButtonCallback);
+}
+
+void Window::setScrollHandler(ScrollHandler h) const
+{
+    assert(m_window);
+    scrollHandlers[m_window] = h;
+    glfwSetScrollCallback(m_window, scrollCallback);
 }
 
 bool Window::shouldClose() const
@@ -855,9 +921,9 @@ void Window::swapBuffers() const
     }
 }
 
-KeyAction Window::getKeyAction(Key key) const
+Action Window::getKeyAction(Key key) const
 {
-    return fromGlfwKeyAction(glfwGetKey(m_window, toGlfwKey(key)));
+    return fromGlfwAction(glfwGetKey(m_window, toGlfwKey(key)));
 }
 
 bool Window::getStickyKeysMode() const
@@ -883,6 +949,60 @@ void Window::setLockModifiersAvailable(bool val)
     if(m_window)
     {
         glfwSetInputMode(m_window, GLFW_LOCK_KEY_MODS, toGLFWBool(val));
+    }
+}
+
+Vec2<double> Window::getCursorPos() const
+{
+    Vec2<double> result;
+    if(m_window)
+    {
+        glfwGetCursorPos(m_window, &result.x, &result.y);
+    }
+    return result;
+}
+
+CursorMode Window::getCursorMode() const
+{
+    return fromGlfwCursorMode(glfwGetInputMode(m_window, GLFW_CURSOR));
+}
+
+void Window::setCursorMode(CursorMode val)
+{
+    if(m_window)
+    {
+        glfwSetInputMode(m_window, GLFW_CURSOR, toGlfwCursorMode(val));
+    }
+}
+
+bool Window::getRawMouseMotionMode() const
+{
+    return glfwGetInputMode(m_window, GLFW_RAW_MOUSE_MOTION) == GLFW_TRUE;
+}
+
+void Window::setRawMouseMotionMode(bool val)
+{
+    if(m_window && glfwRawMouseMotionSupported())
+    {
+        glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, toGLFWBool(val));
+    }
+}
+
+bool Window::isHovered() const
+{
+    return getAttribute<WindowAttribute::HOVERED>();
+}
+
+bool Window::getStickyMouseButtonsMode() const
+{
+    return m_window ? fromGLFWBool(glfwGetInputMode(m_window, GLFW_STICKY_MOUSE_BUTTONS)) : false;
+}
+
+void Window::setStickyMouseButtonsMode(bool val)
+{
+    if(m_window)
+    {
+        glfwSetInputMode(m_window, GLFW_STICKY_MOUSE_BUTTONS, toGLFWBool(val));
     }
 }
 
@@ -946,7 +1066,27 @@ void Window::onText(unsigned int codepoint) const
     tryInvokeCallback(textHandlers, codepoint);
 }
 
-int Window::glfwWindowAttributeValue(WindowAttribute attribute)
+void Window::onCursorPositionChanged(Vec2<double> pos) const
+{
+    tryInvokeCallback(cursorPositionChangeHandlers, pos);
+}
+
+void Window::onCursorEntered(bool entered) const
+{
+    tryInvokeCallback(cursorEnterHandlers, entered);
+}
+
+void Window::onMouseButton(MouseButtonEvent buttonEvent)
+{
+    tryInvokeCallback(mouseClickHandlers, buttonEvent);
+}
+
+void Window::onScroll(Vec2<double> offset)
+{
+    tryInvokeCallback(scrollHandlers, offset);
+}
+
+int Window::glfwWindowAttributeValue(WindowAttribute attribute) const
 {
     switch(attribute)
     {

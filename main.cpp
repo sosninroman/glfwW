@@ -60,7 +60,7 @@ int main()
 
     window.setKeyHandler([](const glfwW::Window& window, glfwW::KeyEvent event){
         std::cerr << event.scancode << "\n";
-        if(event.action == glfwW::KeyAction::PRESS && event.key == glfwW::Key::KEY_ESCAPE)
+        if(event.action == glfwW::Action::PRESS && event.key == glfwW::Key::KEY_ESCAPE)
             {
             window.setShouldClose(true);
         }
@@ -68,6 +68,26 @@ int main()
 
     window.setTextHandler([](const glfwW::Window&, unsigned int codepoint){
         std::cerr << (char)codepoint << "\n";
+    });
+
+    window.setMouseClickHandler([](const glfwW::Window&, glfwW::MouseButtonEvent event){
+        if(event.action == glfwW::Action::PRESS)
+            {
+            switch(event.button)
+            {
+            case glfwW::MouseButton::LEFT_BUTTON:
+                std::cerr << "pressed left mouse button" << "\n";
+                break;
+            case glfwW::MouseButton::RIGHT_BUTTON:
+                std::cerr << "pressed right mouse button" << "\n";
+                break;
+            default:
+                std::cerr << "pressed mouse button" << "\n";
+            }
+
+
+        }
+
     });
 
     window.activate();

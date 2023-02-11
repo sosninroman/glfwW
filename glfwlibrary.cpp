@@ -116,6 +116,11 @@ const char* GLFWlibrary::getKeyName(int scancode)
     return glfwGetKeyName(GLFW_KEY_UNKNOWN, scancode);
 }
 
+bool GLFWlibrary::isRawMouseMotionSupported() const
+{
+    return glfwRawMouseMotionSupported();
+}
+
 void GLFWlibrary::onError(int errorCode, const char *description) const
 {
     if(m_errorHandler)

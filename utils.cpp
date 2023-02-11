@@ -3,6 +3,11 @@
 namespace glfwW
 {
 
+bool fromGLFWBool(int val)
+{
+    return val == GLFW_TRUE;
+}
+
 std::vector<Monitor> getMonitors()
 {
     int count;

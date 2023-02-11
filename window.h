@@ -10,6 +10,7 @@
 #include <optional>
 #include <vector>
 #include "events.h"
+#include "mouse.h"
 
 namespace glfwW
 {
@@ -255,6 +256,10 @@ void windowMaximizeCallback(GLFWwindow* window, int maximized);
 void windowFocusCallback(GLFWwindow* window, int focused);
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void textCallback(GLFWwindow* window, unsigned int codepoint);
+void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos);
+void cursorEnterCallback(GLFWwindow* window, int entered);
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
 enum class WindowAttribute {
     // Window related attributes
@@ -349,6 +354,10 @@ class Window
     friend void windowFocusCallback(GLFWwindow* window, int focused);
     friend void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
     friend void textCallback(GLFWwindow* window, unsigned int codepoint);
+    friend void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos);
+    friend void cursorEnterCallback(GLFWwindow* window, int entered);
+    friend void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+    friend void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 public:
     typedef void(* CloseHandler) (const Window&);
     typedef void(* SizeHandler) (const Window&, Vec2<int>);
@@ -366,6 +375,10 @@ public:
     typedef void(* FocusHandler) (const Window&, bool);
     typedef void(* KeyHandler) (const Window&, KeyEvent);
     typedef void(* TextHandler) (const Window&, unsigned int);
+    typedef void(* CursorPositionChangesHandler) (const Window&, Vec2<double>);
+    typedef void(* CursorEnterHandler)(const Window&, bool);
+    typedef void(* MouseClickHandler)(const Window&, MouseButtonEvent);
+    typedef void(* ScrollHandler) (const Window&, Vec2<double>);
 
     enum class WindowOwnership
     {
@@ -445,6 +458,26 @@ public:
      * \brief Sets a callback for text input.
      */
     void setTextHandler(TextHandler h) const;
+
+    /*!
+     * \brief Sets a callback for cursor position changes. The callback is notified when the cursor moves over the window.
+     */
+    void setCursorPositionChangesHandler(CursorPositionChangesHandler h) const;
+
+    /*!
+     * \brief Sets a callback for cursor entering. The callback is notified when the cursor enters or leaves the window.
+     */
+    void setCursorEnterHandler(CursorEnterHandler h) const;
+
+    /*!
+     * \brief Sets a callback for cursor click.
+     */
+    void setMouseClickHandler(MouseClickHandler h) const;
+
+    /*!
+     * \brief Sets a callback for mouse scrolling.
+     */
+    void setScrollHandler(ScrollHandler h) const;
 
     //WINDOW CLOSING
     /*!
@@ -645,7 +678,7 @@ public:
 
     // ATTRIBUTES
     template<WindowAttribute attribute>
-    auto getAttribute()
+    auto getAttribute() const
     {
         if constexpr(isAppropriateWindowAttributeType<bool, attribute>())
         {
@@ -736,7 +769,7 @@ public:
     /*!
      * \brief Returns the last reported state for the key.
      */
-    KeyAction getKeyAction(Key key) const;
+    Action getKeyAction(Key key) const;
 
     /*!
      * \brief Returns true if sticky keys mode on.
@@ -760,6 +793,36 @@ public:
      */
     void setLockModifiersAvailable(bool val);
 
+    // MOUSE
+    /*!
+     * \brief Returns cursor position.
+     */
+    Vec2<double> getCursorPos() const;
+
+    CursorMode getCursorMode() const;
+    void setCursorMode(CursorMode val);
+
+    /*!
+     * \brief Returns true if raw mouse motion can be obtained in DISABLE mode.
+     */
+    bool getRawMouseMotionMode() const;
+
+    /*!
+     * \brief Sets raw mouse motion mode.
+     */
+    void setRawMouseMotionMode(bool val);
+
+    bool isHovered() const;
+
+    /*!
+     * \brief Returns true if sticky mouse buttons mode on.
+     */
+    bool getStickyMouseButtonsMode() const;
+
+    /*!
+     * \brief Sets sticky mouse buttons mode.
+     */
+    void setStickyMouseButtonsMode(bool val);
 private:
     template<typename CallbacksContainerT, typename... Args>
     void tryInvokeCallback(const CallbacksContainerT& callbacksContainer, Args... args) const
@@ -783,7 +846,11 @@ private:
     void onFocused(bool focused) const;
     void onKeyEvent(KeyEvent event) const;
     void onText(unsigned int codepoint) const;
-    int glfwWindowAttributeValue(WindowAttribute attribute);
+    void onCursorPositionChanged(Vec2<double> pos) const;
+    void onCursorEntered(bool entered) const;
+    void onMouseButton(MouseButtonEvent buttonEvent);
+    void onScroll(Vec2<double> offset);
+    int glfwWindowAttributeValue(WindowAttribute attribute) const;
 
     GLFWwindow* m_window = nullptr;
 
@@ -799,6 +866,10 @@ private:
     static std::unordered_map<GLFWwindow*, FocusHandler> focusHandlers;
     static std::unordered_map<GLFWwindow*, KeyHandler> keyHandlers;
     static std::unordered_map<GLFWwindow*, TextHandler> textHandlers;
+    static std::unordered_map<GLFWwindow*, CursorPositionChangesHandler> cursorPositionChangeHandlers;
+    static std::unordered_map<GLFWwindow*, CursorEnterHandler> cursorEnterHandlers;
+    static std::unordered_map<GLFWwindow*, MouseClickHandler> mouseClickHandlers;
+    static std::unordered_map<GLFWwindow*, ScrollHandler> scrollHandlers;
 
     WindowOwnership m_ownership = WindowOwnership::None;
 };

@@ -6,15 +6,15 @@
 namespace glfwW
 {
 
-enum class KeyAction
+enum class Action
 {
     RELEASE,
     PRESS,
     REPEAT
 };
 
-int toGlfwKeyAction(KeyAction action);
-KeyAction fromGlfwKeyAction(int action);
+int toGlfwAction(Action action);
+Action fromGlfwAction(int action);
 
 enum class Key
 {
@@ -186,7 +186,29 @@ struct KeyEvent
     }
     Key key = Key::KEY_UNKNOWN;
     int scancode = -1;
-    KeyAction action = KeyAction::PRESS;
+    Action action = Action::PRESS;
+    int modifierBits = -1;
+};
+
+enum class MouseButton
+{
+    LEFT_BUTTON,
+    RIGHT_BUTTON,
+    MIDDLE_BUTTON,
+    BUTTON_4,
+    BUTTON_5,
+    BUTTON_6,
+    BUTTON_7,
+    BUTTON_8,
+};
+
+int toGlfwMouseButton(MouseButton button);
+MouseButton fromGlfwMouseButton(int val);
+
+struct MouseButtonEvent
+{
+    MouseButton button = MouseButton::LEFT_BUTTON;
+    Action action = Action::PRESS; // PRESS or RELEASE
     int modifierBits = -1;
 };
 }

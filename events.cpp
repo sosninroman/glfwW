@@ -3,39 +3,39 @@
 namespace glfwW
 {
 
-int toGlfwKeyAction(KeyAction action)
+int toGlfwAction(Action action)
 {
     int result = GLFW_PRESS;
     switch(action)
     {
-    case KeyAction::PRESS:
+    case Action::PRESS:
         result = GLFW_PRESS;
         break;
-    case KeyAction::RELEASE:
+    case Action::RELEASE:
         result = GLFW_RELEASE;
         break;
-    case KeyAction::REPEAT:
+    case Action::REPEAT:
         result = GLFW_REPEAT;
         break;
     }
     return result;
 }
 
-KeyAction fromGlfwKeyAction(int action)
+Action fromGlfwAction(int action)
 {
     if(action == GLFW_PRESS)
     {
-        return KeyAction::PRESS;
+        return Action::PRESS;
     }
     else if(action == GLFW_RELEASE)
     {
-        return KeyAction::RELEASE;
+        return Action::RELEASE;
     }
     else if(action == GLFW_REPEAT)
     {
-        return KeyAction::REPEAT;
+        return Action::REPEAT;
     }
-    return KeyAction::REPEAT;
+    return Action::PRESS;
 }
 
 int toGlfwKey(Key key)
@@ -904,6 +904,77 @@ Key fromGlfwKey(int key)
         result = Key::KEY_MENU;
     }
 
+    return result;
+}
+
+int toGlfwMouseButton(MouseButton button)
+{
+    int result = GLFW_MOUSE_BUTTON_1;
+    switch(button)
+    {
+    case MouseButton::LEFT_BUTTON:
+        result = GLFW_MOUSE_BUTTON_1;
+        break;
+    case MouseButton::RIGHT_BUTTON:
+        result = GLFW_MOUSE_BUTTON_2;
+        break;
+    case MouseButton::MIDDLE_BUTTON:
+        result = GLFW_MOUSE_BUTTON_3;
+        break;
+    case MouseButton::BUTTON_4:
+        result = GLFW_MOUSE_BUTTON_4;
+        break;
+    case MouseButton::BUTTON_5:
+        result = GLFW_MOUSE_BUTTON_5;
+        break;
+    case MouseButton::BUTTON_6:
+        result = GLFW_MOUSE_BUTTON_6;
+        break;
+    case MouseButton::BUTTON_7:
+        result = GLFW_MOUSE_BUTTON_7;
+        break;
+    case MouseButton::BUTTON_8:
+        result = GLFW_MOUSE_BUTTON_8;
+        break;
+    }
+    return result;
+}
+
+MouseButton fromGlfwMouseButton(int val)
+{
+    MouseButton result = MouseButton::LEFT_BUTTON;
+    if(val == GLFW_MOUSE_BUTTON_1)
+    {
+        result = MouseButton::LEFT_BUTTON;
+    }
+    else if(val == GLFW_MOUSE_BUTTON_2)
+    {
+        result = MouseButton::RIGHT_BUTTON;
+    }
+    else if(val == GLFW_MOUSE_BUTTON_3)
+    {
+        result = MouseButton::MIDDLE_BUTTON;
+    }
+    else if(val == GLFW_MOUSE_BUTTON_4)
+    {
+        result = MouseButton::BUTTON_4;
+    }
+    else if(val == GLFW_MOUSE_BUTTON_5)
+    {
+        result = MouseButton::BUTTON_5;
+    }
+    else if(val == GLFW_MOUSE_BUTTON_6)
+    {
+        result = MouseButton::BUTTON_6;
+    }
+    else if(val == GLFW_MOUSE_BUTTON_7)
+    {
+        result = MouseButton::BUTTON_7;
+    }
+    else if(val == GLFW_MOUSE_BUTTON_8)
+    {
+        result = MouseButton::BUTTON_8;
+    }
     return result;
 }
 

@@ -179,6 +179,7 @@ public:
      */
     void waitEventsTimeout(double time) const;
 
+    // KEYBOARD
     /*!
      * \brief Returns scancode for the key
      */
@@ -186,6 +187,9 @@ public:
 
     const char* getKeyName(Key key) const;
     const char* getKeyName(int scancode);
+
+    // MOUSE
+    bool isRawMouseMotionSupported() const;
 private:
     friend void errorCallback(int errorCode, const char *description);
 
