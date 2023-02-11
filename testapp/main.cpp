@@ -1,4 +1,4 @@
-#include "glfwlibrary.h"
+#include "../glfwlibrary.h"
 #include <iostream>
 #include <filesystem>
 
