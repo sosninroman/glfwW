@@ -359,26 +359,26 @@ class Window
     friend void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
     friend void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 public:
-    typedef void(* CloseHandler) (const Window&);
-    typedef void(* SizeHandler) (const Window&, Vec2<int>);
-    typedef void(* ScaleHandler) (const Window&, Vec2<float>);
-    typedef void(* PositionHandler) (const Window&, Vec2<int>);
-    typedef void(* RefreshHandler) (const Window&);
-    typedef void(* MinimizeHandler) (const Window&);
-    typedef void(* MaximizeHandler) (const Window&);
+    using CloseHandler = std::function<void(const Window&)>;
+    using SizeHandler = std::function<void(const Window&, Vec2<int>)>;
+    using ScaleHandler = std::function<void(const Window&, Vec2<float>)>;
+    using PositionHandler = std::function<void(const Window&, Vec2<int>)>;
+    using RefreshHandler = std::function<void(const Window&)>;
+    using MinimizeHandler = std::function<void(const Window&)>;
+    using MaximizeHandler = std::function<void(const Window&)>;
     enum class RestoreMode
     {
         FromMinimized,
         FromMaximized
     };
-    typedef void(* RestoreHandler) (const Window&, RestoreMode);
-    typedef void(* FocusHandler) (const Window&, bool);
-    typedef void(* KeyHandler) (const Window&, KeyEvent);
-    typedef void(* TextHandler) (const Window&, unsigned int);
-    typedef void(* CursorPositionChangesHandler) (const Window&, Vec2<double>);
-    typedef void(* CursorEnterHandler)(const Window&, bool);
-    typedef void(* MouseClickHandler)(const Window&, MouseButtonEvent);
-    typedef void(* ScrollHandler) (const Window&, Vec2<double>);
+    using RestoreHandler = std::function<void(const Window&, RestoreMode)>;
+    using FocusHandler = std::function<void(const Window&, bool)>;
+    using KeyHandler = std::function<void(const Window&, KeyEvent)>;
+    using TextHandler = std::function<void(const Window&, unsigned int)>;
+    using CursorPositionChangesHandler = std::function<void(const Window&, Vec2<double>)>;
+    using CursorEnterHandler = std::function<void(const Window&, bool)>;
+    using MouseClickHandler = std::function<void(const Window&, MouseButtonEvent)>;
+    using ScrollHandler = std::function<void(const Window&, Vec2<double>)>;
 
     enum class WindowOwnership
     {
@@ -391,6 +391,7 @@ private:
           m_window(window), m_ownership(ownership)
     {}
 public:
+    Window() = default;
     Window(GLFWwindow* window);
     Window(const Window&) = delete;
     Window(Window&& rhs);
