@@ -397,6 +397,8 @@ public:
     Window(Window&& rhs);
     ~Window();
 
+    Window& operator=(Window&& rhs);
+
     bool valid() const {return m_window;}
 
     // CALLBACKS

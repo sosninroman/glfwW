@@ -482,6 +482,21 @@ Window::~Window()
     }
 }
 
+Window& Window::operator=(Window&& rhs)
+{
+    if(this == &rhs)
+    {
+        return *this;
+    }
+    std::swap(m_window, rhs.m_window);
+    std::swap(m_ownership, rhs.m_ownership);
+
+    rhs.m_window = 0;
+    rhs.m_ownership = WindowOwnership::None;
+
+    return *this;
+}
+
 void Window::setCloseHandler(CloseHandler h) const
 {
     assert(m_window);
